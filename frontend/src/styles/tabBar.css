@@ -1,6 +1,6 @@
 /*
  * Tabs now sit inside the Navbar, next to the logo.
- * CHANGED: underline tabs like the reference design:
+ * CHANGED (style): underline tabs like the reference design:
  *  - inactive: muted text, no background
  *  - hover: normal text color
  *  - active: accent text + accent underline
@@ -21,7 +21,7 @@
     border: none;
     background: transparent;
     color: rgba(var(--fg-rgb), 0.5);
-    font-size: 0.95rem;                  
+    font-size: 0.95rem;                     /*Adjust to downloaded font alter*/
     font-weight: 500;
     cursor: pointer;
     border-radius: 0;
@@ -41,7 +41,7 @@
 .tab-btn::after {
     content: '';
     position: absolute;
-    bottom: -5px;
+    bottom: -5px;              /* sits on the navbar's row-1 divider */
     left: 0;
     right: 0;
     height: 2px;

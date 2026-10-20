@@ -2,7 +2,7 @@
  * use this to call api.js then use transformer.js to feed data to UI
  * Flow: api.js -> transformer.js -> react state -> ui
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     fetchSystemStatus,
     fetchLatestReadings,
@@ -21,6 +21,8 @@ export default function useDashboardData() {
     const [device, setDevice] = useState(null);
     const [current, setCurrent] = useState(null);
     const [thresholds, setThresholds] = useState(null);
+    // the active profile itself (name, description, all min/max), for ProfileIndicator
+    const [activeProfile, setActiveProfile] = useState(null);
     const [charts, setCharts] = useState(null);
 
     const [loading, setLoading] = useState(true);
@@ -48,7 +50,7 @@ export default function useDashboardData() {
                     // Chart AND the expanded-view average both use this same data.
                     fetchHistoricalData({ sensorType: "bme280", hours: 24, limit: 3000 }),
                     fetchHistoricalData({ sensorType: "bme280", hours: 24, limit: 3000 }),
-                    fetchHistoricalData({ sensorType: "ph",     hours: 24, limit: 3000 }),
+                    fetchHistoricalData({ sensorType: "ph", hours: 24, limit: 3000 }),
                     // NEW: one BME680 fetch feeds both new charts
                     fetchHistoricalData({ sensorType: "bme680", hours: 24, limit: 3000 }),
                 ]);
@@ -57,6 +59,7 @@ export default function useDashboardData() {
                 setDevice(mapSystemStatusToDevice(systemStatus));
                 setCurrent(mapLatestReadingsToCurrent(latestReadings));
                 setThresholds(mapActiveConfigToThresholds(activeConfig));
+                setActiveProfile(activeConfig);   // NEW
 
                 setCharts({
                     temperature: mapHistoricalRowsToMetricChart(
@@ -97,5 +100,19 @@ export default function useDashboardData() {
         return () => clearInterval(interval);
     }, []);
 
-    return { device, current, thresholds, charts, loading, error, };
+    // re-read the active profile. The first load only happens once, so without
+    // this the cards kept the OLD profile's thresholds after "Use" in Settings until
+    // the page was reloaded. App calls this whenever the Dashboard tab is opened.
+    const refreshProfile = useCallback(async () => {
+        try {
+            const activeConfig = await fetchActiveConfiguration();
+            setActiveProfile(activeConfig);
+            setThresholds(mapActiveConfigToThresholds(activeConfig));
+        } catch (err) {
+            // keep showing the last known profile rather than blanking the dashboard
+            console.error("Profile refresh failed: ", err);
+        }
+    }, []);
+
+    return { device, current, thresholds, charts, activeProfile, refreshProfile, loading, error, };
 }

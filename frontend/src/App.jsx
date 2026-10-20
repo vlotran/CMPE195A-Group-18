@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
     getAlerts,
     getToken,
@@ -77,7 +77,11 @@ function App() {
  * CHANGED: this was the body of App; it now only mounts after login.
  */
 function AuthedApp({ user, onLogout }) {
-    const { device, current, thresholds, charts, loading, error } = useDashboardData();
+    const {
+        device, current, thresholds, charts,
+        activeProfile, refreshProfile,
+        loading, error,
+    } = useDashboardData();
     // "dashboard" = show sensor cards and charts
     // "settings"  = show threshold profile management
     // "appearance" = show theme + temperature unit buttons
@@ -113,6 +117,16 @@ function AuthedApp({ user, onLogout }) {
         return () => { cancelled = true; clearInterval(id); };
     }, []);
 
+    // NEW: re-read the active profile whenever the Dashboard tab is shown, so a profile
+    // changed in Settings shows up on the indicator AND the card thresholds right away.
+    // (Skips the very first render; the initial load already fetched it.)
+    const seenDashboard = useRef(false);
+    useEffect(() => {
+        if (activeTab !== "dashboard" || loading) return;
+        if (seenDashboard.current) refreshProfile();
+        seenDashboard.current = true;
+    }, [activeTab, loading, refreshProfile]);
+
     const visible = dangerAlerts.filter((a) => !dismissed.has(a.id));
 
     const handleClose = () => {
@@ -122,27 +136,27 @@ function AuthedApp({ user, onLogout }) {
             return next;
         });
     };
-    
+
     // Loading State
     if (loading) {
         return (
             <>
-                <Navbar 
-                    deviceName="Loading..." 
-                    status="offline" 
+                <Navbar
+                    deviceName="Loading..."
+                    status="offline"
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                     userName={user.name}
                     onLogout={onLogout}
                 />
                 {activeTab === "appearance" ? appearancePage : (
-                <main className="dashboard">
-                    {activeTab === "dashboard" ? (
-                        <p>Loading dashboard data...</p>
-                    ) : (
-                        <Settings />
-                    )}
-                </main>
+                    <main className="dashboard">
+                        {activeTab === "dashboard" ? (
+                            <p>Loading dashboard data...</p>
+                        ) : (
+                            <Settings />
+                        )}
+                    </main>
                 )}
             </>
         );
@@ -151,8 +165,8 @@ function AuthedApp({ user, onLogout }) {
     if (error) {
         return (
             <>
-                <Navbar 
-                    deviceName="System Error" 
+                <Navbar
+                    deviceName="System Error"
                     status="offline"
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
@@ -160,13 +174,13 @@ function AuthedApp({ user, onLogout }) {
                     onLogout={onLogout}
                 />
                 {activeTab === "appearance" ? appearancePage : (
-                <main className="dashboard">
-                    {activeTab === "dashboard" ? (
-                        <p>Error: {error}</p>
-                    ) : (
-                        <Settings />
-                    )}
-                </main>
+                    <main className="dashboard">
+                        {activeTab === "dashboard" ? (
+                            <p>Error: {error}</p>
+                        ) : (
+                            <Settings />
+                        )}
+                    </main>
                 )}
             </>
         );
@@ -190,6 +204,8 @@ function AuthedApp({ user, onLogout }) {
                     current={current}
                     thresholds={thresholds}
                     charts={charts}
+                    profile={activeProfile}
+                    onManageProfiles={() => setActiveTab("settings")}
                 />
             ) : activeTab === "appearance" ? (
                 appearancePage

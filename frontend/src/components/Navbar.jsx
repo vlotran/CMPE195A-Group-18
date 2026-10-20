@@ -17,10 +17,10 @@
 import React from "react";
 import onlineIcon from "../assets/icons/online.png";
 import offlineIcon from "../assets/icons/offline.png";
-import logoLight from "../assets/Logo_light.png";  
-import logoDark from "../assets/Logo_dark.png";     
+import logoLight from "../assets/Logo_light.png";
+import logoDark from "../assets/Logo_dark.png";
 import { useTheme, LIGHT } from "../contexts/ThemeContext.jsx";
-import TabBar from "./TabBar.jsx";   
+import TabBar from "./TabBar.jsx";                  // tabs live in the navbar now
 import "../styles/typography.css";
 import "../styles/navbar.css";
 

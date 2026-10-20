@@ -9,11 +9,16 @@
 import React from "react";
 import SensorCard from "../components/SensorCard.jsx";
 import SensorChart from "../components/SensorChart.jsx";
+import ProfileIndicator from "../components/ProfileIndicator.jsx";
 
-function Dashboard({ current, thresholds, charts }) {
+// props: profile (active threshold profile), onManageProfiles (opens Settings)
+function Dashboard({ current, thresholds, charts, profile, onManageProfiles }) {
 
     return (
         <main className="dashboard">
+            {/*  which profile the cards below are judged against */}
+            <ProfileIndicator profile={profile} onManage={onManageProfiles} />
+
             {/* Sensor Cards */}
             <section className="card-grid">
                 <SensorCard
@@ -89,7 +94,7 @@ function Dashboard({ current, thresholds, charts }) {
                     timestamps={charts?.aqi_score?.timestamps ?? []}
                 />
             </section>
-        
+
         </main>
     );
 }

@@ -9,7 +9,7 @@
 import React from "react";
 import "../styles/tabBar.css";
 
-function TabBar({activeTab, onTabChange}) {
+function TabBar({ activeTab, onTabChange }) {
     return (
         <nav className="tab-bar">
             {/* Dashboard Tab */}
