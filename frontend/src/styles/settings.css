@@ -30,6 +30,7 @@
 .btn-create:hover {    
     background: var(--accent); 
     color: var(--on-accent); 
+    border-color: var(--accent);   /* CHANGED: index.css turned the border blue on hover */
 }
 
 .profile-list { 

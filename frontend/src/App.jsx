@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
     getAlerts,
     getToken,
@@ -77,7 +77,11 @@ function App() {
  * CHANGED: this was the body of App; it now only mounts after login.
  */
 function AuthedApp({ user, onLogout }) {
-    const { device, current, thresholds, charts, loading, error } = useDashboardData();
+    const {
+        device, current, thresholds, charts,
+        activeProfile, refreshProfile,          // NEW: for ProfileIndicator
+        loading, error,
+    } = useDashboardData();
     // "dashboard" = show sensor cards and charts
     // "settings"  = show threshold profile management
     // "appearance" = show theme + temperature unit buttons
@@ -112,6 +116,16 @@ function AuthedApp({ user, onLogout }) {
         const id = setInterval(poll, 15000);
         return () => { cancelled = true; clearInterval(id); };
     }, []);
+
+    // NEW: re-read the active profile whenever the Dashboard tab is shown, so a profile
+    // changed in Settings shows up on the indicator AND the card thresholds right away.
+    // (Skips the very first render; the initial load already fetched it.)
+    const seenDashboard = useRef(false);
+    useEffect(() => {
+        if (activeTab !== "dashboard" || loading) return;
+        if (seenDashboard.current) refreshProfile();
+        seenDashboard.current = true;
+    }, [activeTab, loading, refreshProfile]);
 
     const visible = dangerAlerts.filter((a) => !dismissed.has(a.id));
 
@@ -190,6 +204,8 @@ function AuthedApp({ user, onLogout }) {
                     current={current}
                     thresholds={thresholds}
                     charts={charts}
+                    profile={activeProfile}                         // NEW
+                    onManageProfiles={() => setActiveTab("settings")} // NEW
                 />
             ) : activeTab === "appearance" ? (
                 appearancePage

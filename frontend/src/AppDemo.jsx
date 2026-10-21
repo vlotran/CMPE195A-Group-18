@@ -211,6 +211,8 @@ function AppDemo() {
                     current={MOCK_CURRENT}
                     thresholds={thresholds}
                     charts={MOCK_CHARTS}
+                    profile={activeProfile}                          // NEW
+                    onManageProfiles={() => setActiveTab("settings")}  // NEW
                 />
             ) : (
                 // Settings Tab

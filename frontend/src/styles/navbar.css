@@ -8,7 +8,7 @@
     position: relative;
 }
 
-/* one row with three areas: logo | tabs | account.
+/* CHANGED (layout): one row with three areas: logo | tabs | account.
    Grid keeps the tabs right after the logo and pushes the account to the far right. */
 .nav-top {
     display: grid;
@@ -21,12 +21,15 @@
     border-bottom: 1px solid rgba(var(--fg-rgb), 0.08);
 }
 
-/* logo replaces the title text. It's a link that reloads the page. Tune --logo-size (below) to taste. */
+/* logo replaces the title text. It's a link that reloads the page.
+   The logo file is a 500x500 square with empty space above and below the
+   wordmark, so it's drawn larger and the negative margin keeps that empty
+   space from making the row taller. Tune --logo-size to taste. */
 .nav-logo-link {
-    --logo-size: 120px;
+    --logo-size: 88px;
     grid-area: logo;
     display: block;
-    margin: calc(var(--logo-size) * -0.25) 0;  
+    margin: calc(var(--logo-size) * -0.25) 0;   /* trim the square's top/bottom padding */
     line-height: 0;
     border-radius: 8px;
 }
