@@ -62,7 +62,7 @@
     white-space: nowrap;  
 }
 
-/* CHANGED: same look as the other buttons; turns red on hover (log out = leave) */
+/* same look as the other buttons; turns red on hover (log out = leave) */
 .nav-logout {
     padding: 8px 16px;
     border: 1px solid var(--accent);
