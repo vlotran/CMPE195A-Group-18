@@ -91,6 +91,13 @@
     opacity: 0.85;
 }
 
+/* "5-min average" / "Worst in 5 min" under the time */
+.tooltip-note {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-top: 2px;
+}
+
 .chart-svg circle {
     transition: opacity 0.2s ease;
 }
@@ -124,7 +131,6 @@
 }
 }
 
-/*New*/
 .chart-axis-labels {
     position: relative;
     width: 42px;
@@ -205,12 +211,12 @@
     right: 0;
     top: 100%;
     height: 20px;
-    pointer-events: none;   /* don't interfere with hover */
+    pointer-events: none;   
 }
 .x-label {
     position: absolute;
     top: 6px;
-    transform: translateX(-50%);   /* center label on its hour */
+    transform: translateX(-50%);   
     font-size: 0.65rem;
     opacity: 0.55;
     white-space: nowrap;
