@@ -234,12 +234,12 @@ function SensorChart({title, metric, data = [], timestamps = []}) {
                 {isExpanded && (
                     <aside className="chart-summary">
                         <div className="summary-avg">
-                            {hasData ? `${fmt(avgValue)}${unit}` : "--"}
+                            {hasData ? `${fmt(avgValue)}${unit}` : "-"}
                         </div>
                         <div className="summary-label">Average · Last 24h</div>
                         {hasData && (
                             <div className="summary-range">
-                                {formatTimestamp(rangeStart)} – {formatTimestamp(rangeEnd)}
+                                {formatTimestamp(rangeStart)} - {formatTimestamp(rangeEnd)}
                             </div>
                         )}
                         <div className="summary-minmax">
