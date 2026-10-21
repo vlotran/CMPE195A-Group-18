@@ -5,6 +5,8 @@
  */
 import React from "react";
 import "../styles/alertModal.css";   
+import { formatDateTime } from "../utils/time.js"; 
+import { formatAlertMessage } from "../utils/alerts.js"; 
 
 function AlertModal({ alerts, onClose }) {
     if (!alerts.length) return null;
@@ -24,9 +26,9 @@ function AlertModal({ alerts, onClose }) {
                 <ul className="alert-modal-list">
                     {alerts.map((a) => (
                         <li key={a.id} className="alert-modal-item">
-                            <p className="alert-modal-message">{a.message}</p>
-                            <time className="alert-modal-time">
-                                {new Date(a.created_at).toLocaleString()}
+                            <p className="alert-modal-message">{formatAlertMessage(a.message)}</p>
+                            <time className="alert-modal-time" dateTime={a.created_at}>
+                                {formatDateTime(a.created_at)}
                             </time>
                         </li>
                     ))}
