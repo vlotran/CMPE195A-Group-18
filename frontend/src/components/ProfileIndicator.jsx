@@ -16,7 +16,7 @@ import React, { useState } from "react";
 import { useTempUnit } from "../contexts/TempUnitContext.jsx";
 import { formatTempRange } from "../utils/units.js";
 import "../styles/profileIndicator.css";
-
+import downArrowIcon from "../assets/icons/down-arrow.png"; 
 // "-" when a value is missing (e.g. an older backend without the BME680 fields)
 const range = (lo, hi, unit = "") =>
     lo == null || hi == null ? "--" : `${lo} – ${hi}${unit}`;
@@ -33,7 +33,7 @@ function ProfileIndicator({ profile, onManage }) {
         );
     }
 
-    // Temperature is stored in °C; show it in the unit chosen on the Appearance page
+    // Temperature is stored in C; show it in the unit chosen on the Appearance page
     const items = [
         { key: "ph", label: "pH", value: range(profile.ph_min, profile.ph_max) },
         {
@@ -58,7 +58,12 @@ function ProfileIndicator({ profile, onManage }) {
             >
                 <span className="profile-indicator-label">Profile:</span>
                 <span className="profile-indicator-name">{profile.name}</span>
-                <span className="profile-indicator-caret" aria-hidden="true">▾</span>
+                {/* PNG arrow (mask, so it follows the button color); flips when open */}
+                <span
+                    className="profile-indicator-caret"
+                    style={{ "--icon": `url(${downArrowIcon})` }}
+                    aria-hidden="true"
+                />
             </button>
 
             {isOpen && (

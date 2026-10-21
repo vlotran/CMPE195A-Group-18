@@ -33,6 +33,20 @@
     border-color: var(--accent);   /* CHANGED: index.css turned the border blue on hover */
 }
 
+/* PNG icon drawn in the button's current text color.
+    The PNG only supplies the shape (its transparent parts stay transparent);
+    background-color: currentColor paints it, so it follows hover + theme.
+   The image comes from the --icon variable set on the element. */
+.btn-icon {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    background-color: currentColor;
+    -webkit-mask: var(--icon) center / contain no-repeat;
+            mask: var(--icon) center / contain no-repeat;
+}
+
 .profile-list { 
     display: flex; 
     flex-direction: column; 
