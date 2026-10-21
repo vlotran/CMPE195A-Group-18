@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import secrets
 import time
-from threading import Condition
+from threading import Condition, Lock
 
 try:  # Raspberry Pi only; deliberately optional for local development.
     from picamera2 import Picamera2
@@ -64,6 +64,7 @@ class CameraManager:
         self._output: StreamingOutput | None = None
         self._started = False
         self._stream_tokens: dict[str, float] = {}
+        self._lifecycle_lock = Lock()
 
     @property
     def available(self) -> bool:
@@ -74,28 +75,45 @@ class CameraManager:
         return self._started
 
     def start(self) -> None:
-        if self._started or not self.available:
-            return
+        with self._lifecycle_lock:
+            if self._started or not self.available:
+                return
 
-        self._camera = Picamera2()
-        configuration = self._camera.create_video_configuration(
-            main={"size": (640, 480), "format": "RGB888"},
-            controls={"FrameRate": 15},
-        )
-        self._camera.configure(configuration)
-        self._output = StreamingOutput()
-        self._camera.start_recording(JpegEncoder(q=80), FileOutput(self._output))
-        self._started = True
+            camera = Picamera2()
+            output = StreamingOutput()
+            try:
+                configuration = camera.create_video_configuration(
+                    main={"size": (640, 480), "format": "RGB888"},
+                    controls={"FrameRate": 15},
+                )
+                camera.configure(configuration)
+                camera.start_recording(JpegEncoder(q=80), FileOutput(output))
+            except Exception:
+                try:
+                    camera.close()
+                except Exception:
+                    pass
+                raise
+
+            self._camera = camera
+            self._output = output
+            self._started = True
 
     def stop(self) -> None:
-        if not self._started:
-            return
+        with self._lifecycle_lock:
+            if not self._started:
+                return
 
-        self._camera.stop_recording()
-        self._camera.close()
-        self._camera = None
-        self._output = None
-        self._started = False
+            camera = self._camera
+            try:
+                camera.stop_recording()
+            finally:
+                try:
+                    camera.close()
+                finally:
+                    self._camera = None
+                    self._output = None
+                    self._started = False
 
     def issue_stream_token(self, lifetime_seconds: int = 600) -> str:
         """Create a short-lived token suitable for an image-stream URL."""
