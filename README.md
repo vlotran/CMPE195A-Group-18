@@ -1,103 +1,75 @@
-# Smart Hydroponic Garden System
+# SMART HYDROPONIC GARDEN SYSTEM (the one we will submit)
 
 ## Team
 - Hoa Tuong Minh Nguyen (GitHub: @MinhHoaNguyen)
 - Vy Lo Phuong Tran (GitHub: @vlotran)
-- Thai Nguyen (GitHub: @d2blepeace)
-- Ishmeet Kaur  (GitHub: @username)
+- Thai Nguyen (GitHub: @thaiHnguyen)
 
 ## Project Description
-The Smart Hydroponic Garden System dashboard displays sensor data collected from our Raspberry Pi monitoring system, including environmental readings and system status. The frontend connects to a FastAPI backend hosted on the Raspberry Pi server to fetch and visualize sensor readings.
+Small hydroponic growers have to check pH, temperature and humidity manually and problems often go unnoticed until plants are damaged. Our system uses a Raspberry Pi 5 with I2C sensors to read the garden data in real time, stores the readings, and shows them on a web dashboard that helps each user monitor their plant conditions. It is an **open-loop** system: senses, stores, displays and alerts, then user can takes action.
 
-## High Level Architecture
-![High_Level_Architecture_Diagram](Hydroponic_High_Level.png)
+## Prototype Scope
+**Works end to end now:**
+- Sensors -> Raspberry Pi -> FastAPI -> SQLite -> React dashboard, refreshing every 5 seconds
 
-## Proof of Concept Scope
-**This PoC demonstrates (Frontend):**
-- A React dashboard UI running locally via Vite
-- Fetching and displaying sensor data from our Raspberry Pi–hosted backend API
-- Basic visualization of environmental readings and system status
-- Customizable threshold profiles with visual alerts when parameters fall outside desirable ranges
+- Five metrics: temperature, humidity, pH, air pressure, air quality score, each with a card and a 24-hour chart
 
-**Not included yet:**
-- Hardware automation controls (pumps/lights/nutrient dosing)
-- Advanced analytics and reporting
-- Cloud hosting for the frontend (currently runs locally; users cannot access it via a public URL yet)
-- Options to convert units: F -> C, C -> F on Dashboard's value of sensors.
+- User accounts: create account, sign in with 6-hour session, log out
+
+- Per-user threshold profiles: every account starts with 10 example profiles (Lettuce, Tomato, Basil) and can add, edit, delete and activate its own
+
+- Per-user alerts: each reading is checked against each user's active profile; Warning/Danger states on the cards and a popup for Danger
+
+- Appearance settings: light/dark theme, °C/°F
+
+- Mock sensor mode: the whole system runs on a laptop without hardware
+
+- CI on every push (GitHub Actions): backend tests, frontend lint and build
+
+**Incomplete:**
+- Password reset ("Forgot password?") is not implemented
+...
+## System Architecture
+... insert diagram
+
+- **Sensors:** BME280 (temperature, humidity, pressure), BME680 (temperature, humidity, pressure, air quality), Atlas Scientific EZO-pH on I2C.
+- **Data collector:** a background task in the backend reads every sensor, stores the reading, and evaluates it against every user's active profile. If a sensor's hardware is missing, that sensor falls back to mock data on its own.
+- **API:** FastAPI. Sensor data is public; profiles and alerts need a login token (`Authorization: Bearer <token>`).
+- **Database:** SQLite (`data/hydroponic.db`) with tables for readings, users, sessions, profiles and alerts. Older databases are upgraded automatically on startup.
+- **Frontend:** React + Vite, reached through an ngrok tunnel to the Pi.
+- **Open loop:** data flows one way, from sensors to the user. Nothing in the system controls pumps, lights or dosing.
 
 ## Prerequisites
-- **Node.js 20.19+ (recommended: Node 20 LTS)**  
-  Required because our tooling (Vite plugin + Tailwind) requires Node 20+.
-  - Download: https://nodejs.org/
-- **npm** (included with Node.js)
-- Network access to the Raspberry Pi backend API
+- Python: Version 3.11+
+- Node.js: 20.19+ or 22.12+
+- Git: any
 
-Verify installation:
-```bash
-node -v
-npm -v
-```
+**Hardware (only for real sensors):** Raspberry Pi 5 with I2C enabled, BME280, BME680, Atlas Scientific EZO-pH (I2C mode). Without hardware, use mock mode.
+
+**Accounts:** none needed to run locally. Public access to the Pi uses an ngrok account (held by the team).
 
 ## Installation
-### 1) Clone repository
-```bash
-git clone <repository-url>
-cd group-project-expedition-23
-```
+Numbered steps from a clean machine. Document environment variables without their values.
 
-### 2) Install frontend dependencies
-```bash
-cd frontend
-npm install
-```
+## Running the Prototype
+The exact commands to start the system.
 
-## Running the PoC
-```bash
-npm run dev
-```
-
-You should see output similar to:
-```text
-> frontend@0.0.0 dev
-> vite
-VITE v7.3.1  ready in 500 ms
-➜  Local:   http://localhost:5173/
-```
-
-Open the Local URL shown (commonly `http://localhost:5173/`) to view the dashboard.
+## Testing
+How to run your tests, and what they cover.
 
 ## Demo
-- **Video (Frontend UI walkthrough):** [YouTube Link](https://youtu.be/SXYAv3ERbVE?si=7_VTFTLSeXw4wd_a)
-
-  **Notes:**
-  - There is an initialization period where the system may display as **“Offline”** immediately after first connecting.
-  - On the main dashboard graphs, hovering over the chart shows a **tooltip** with the reading **timestamp**.
-  - In **Settings**, after changing a threshold value, you must **refresh the page** for the dashboard to reflect the updated thresholds.
-  - Only the **“Temperature”** and **“Humidity”** readings are live data,  **“pH”** is a placeholder for now.
-  - There is no option to convert the **temperature** unit from C to F yet.
-- **Video (API call testing):** [YouTube Link](https://youtu.be/-H160rNT_Qo)
-
-- Screenshots/GIFs:
-  - Main dashboard showing sensor readings
-  ![Dashboard](docs/screenshots/Dashboard.png)
-  - Settings dashboard for customizing threshold profiles
-  ![Alerts](docs/screenshots/Settings.png)
+Your demo video link, plus screenshots or logs.
 
 ## Technical Stack
-- **Frontend/UI:** React + Vite (component-based UI, fast dev server)
-- **Styling:** Tailwind CSS + custom CSS (layout + status color-coding)
-- **Backend API:** FastAPI (async-native, minimal boilerplate, auto API docs)
-- **Database:** SQLite + aiosqlite (zero-config, Raspberry Pi–friendly)
-- **Data Validation:** Pydantic (enforces valid sensor ranges and configuration constraints)
-- **Logging:** Loguru (simple, readable logging)
-- **Background Tasks:** Python asyncio (non-blocking periodic sensor polling)
-- **Networking:** ngrok (secure public URL for Raspberry Pi backend)
-- **Hardware:** Raspberry Pi 5 (backend hosting + GPIO for sensors)
-- **Sensors:** BME280, BME680 (temperature/humidity/pressure/air quality via I2C)
-- **Drivers/Libraries:** Adafruit CircuitPython (tested sensor libraries)
+- **Languages:** Python, JavaScript (JSX), SQL
+- **Frontend:** React 19, Vite 7, Tailwind CSS 4 + custom CSS, custom SVG charts
+- **Backend:** FastAPI, Uvicorn, Pydantic v2, pydantic-settings, asyncio, Loguru
+- **Database:** SQLite via aiosqlite
+- **Auth:** scrypt password hashing and session tokens (Python standard library)
+- **Hardware:** Raspberry Pi 5; BME280, BME680, Atlas Scientific EZO-pH
+- **Hardware libraries:** Adafruit CircuitPython (BME280/BME680), smbus2 (EZO-pH)
+- **Networking:** ngrok
+- **Testing / CI:** pytest, ESLint, GitHub Actions
 
-## What's Next (195B)
-- Improve dashboard UX (filters, time ranges, better charts)
-- Live updates (WebSockets/SSE) for real-time sensor streaming
-- Alert management UI (acknowledge/resolve/history)
-- Automation controls and scheduling for hydroponic hardware
+## What's Next
+What you will finish before the Project Expo on December 11.
