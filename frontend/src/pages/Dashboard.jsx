@@ -1,6 +1,6 @@
 /**
  * Dashboard.jsx so that it can be used in both App.jsx and AppdDemo.jsx without duplication
- * 
+ *
  * Displays sensor cards (Temperature, Humidity, pH, Air Pressure, Air Quality Score)
  * and their historical charts. Pressure + Air Quality come from the BME680.
  * Extracted from App.jsx so each page has its own component
@@ -9,7 +9,8 @@
 import React from "react";
 import SensorCard from "../components/SensorCard.jsx";
 import SensorChart from "../components/SensorChart.jsx";
-import ProfileIndicator from "../components/ProfileIndicator.jsx"; 
+import ProfileIndicator from "../components/ProfileIndicator.jsx";
+import CameraWidget from "../components/CameraWidget.jsx";
 
 // NEW props: profile (active threshold profile), onManageProfiles (opens Settings)
 function Dashboard({ current, thresholds, charts, profile, onManageProfiles }) {
@@ -18,6 +19,8 @@ function Dashboard({ current, thresholds, charts, profile, onManageProfiles }) {
         <main className="dashboard">
             {/* NEW: which profile the cards below are judged against */}
             <ProfileIndicator profile={profile} onManage={onManageProfiles} />
+
+            <CameraWidget />
 
             {/* Sensor Cards */}
             <section className="card-grid">
