@@ -1,5 +1,4 @@
-/* active profile indicator above the sensor cards (ProfileIndicator.jsx) */
-
+/*active profile indicator above the sensor cards (ProfileIndicator.jsx) */
 .profile-indicator {
     display: flex;
     flex-direction: column;

@@ -17,7 +17,7 @@ import { useTempUnit } from "../contexts/TempUnitContext.jsx";
 import { formatTempRange } from "../utils/units.js";
 import "../styles/profileIndicator.css";
 
-// "--" when a value is missing (e.g. an older backend without the BME680 fields)
+// "-" when a value is missing (e.g. an older backend without the BME680 fields)
 const range = (lo, hi, unit = "") =>
     lo == null || hi == null ? "--" : `${lo} – ${hi}${unit}`;
 

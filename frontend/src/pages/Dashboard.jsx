@@ -9,14 +9,14 @@
 import React from "react";
 import SensorCard from "../components/SensorCard.jsx";
 import SensorChart from "../components/SensorChart.jsx";
-import ProfileIndicator from "../components/ProfileIndicator.jsx";
+import ProfileIndicator from "../components/ProfileIndicator.jsx"; 
 
-// props: profile (active threshold profile), onManageProfiles (opens Settings)
+// NEW props: profile (active threshold profile), onManageProfiles (opens Settings)
 function Dashboard({ current, thresholds, charts, profile, onManageProfiles }) {
 
     return (
         <main className="dashboard">
-            {/*  which profile the cards below are judged against */}
+            {/* NEW: which profile the cards below are judged against */}
             <ProfileIndicator profile={profile} onManage={onManageProfiles} />
 
             {/* Sensor Cards */}
@@ -42,7 +42,7 @@ function Dashboard({ current, thresholds, charts, profile, onManageProfiles }) {
                     min={thresholds?.ph?.min ?? 0}
                     max={thresholds?.ph?.max ?? 0}
                 />
-                {/* NEW: BME680 cards */}
+                {/* BME680 cards */}
                 <SensorCard
                     title="Air Pressure"
                     metric="pressure"
@@ -94,7 +94,6 @@ function Dashboard({ current, thresholds, charts, profile, onManageProfiles }) {
                     timestamps={charts?.aqi_score?.timestamps ?? []}
                 />
             </section>
-
         </main>
     );
 }

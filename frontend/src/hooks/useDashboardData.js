@@ -21,7 +21,7 @@ export default function useDashboardData() {
     const [device, setDevice] = useState(null);
     const [current, setCurrent] = useState(null);
     const [thresholds, setThresholds] = useState(null);
-    // the active profile itself (name, description, all min/max), for ProfileIndicator
+    // NEW: the active profile itself (name, description, all min/max), for ProfileIndicator
     const [activeProfile, setActiveProfile] = useState(null);
     const [charts, setCharts] = useState(null);
 
@@ -50,7 +50,7 @@ export default function useDashboardData() {
                     // Chart AND the expanded-view average both use this same data.
                     fetchHistoricalData({ sensorType: "bme280", hours: 24, limit: 3000 }),
                     fetchHistoricalData({ sensorType: "bme280", hours: 24, limit: 3000 }),
-                    fetchHistoricalData({ sensorType: "ph", hours: 24, limit: 3000 }),
+                    fetchHistoricalData({ sensorType: "ph",     hours: 24, limit: 3000 }),
                     // NEW: one BME680 fetch feeds both new charts
                     fetchHistoricalData({ sensorType: "bme680", hours: 24, limit: 3000 }),
                 ]);

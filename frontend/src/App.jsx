@@ -79,7 +79,7 @@ function App() {
 function AuthedApp({ user, onLogout }) {
     const {
         device, current, thresholds, charts,
-        activeProfile, refreshProfile,
+        activeProfile, refreshProfile,          // NEW: for ProfileIndicator
         loading, error,
     } = useDashboardData();
     // "dashboard" = show sensor cards and charts
@@ -136,27 +136,27 @@ function AuthedApp({ user, onLogout }) {
             return next;
         });
     };
-
+    
     // Loading State
     if (loading) {
         return (
             <>
-                <Navbar
-                    deviceName="Loading..."
-                    status="offline"
+                <Navbar 
+                    deviceName="Loading..." 
+                    status="offline" 
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                     userName={user.name}
                     onLogout={onLogout}
                 />
                 {activeTab === "appearance" ? appearancePage : (
-                    <main className="dashboard">
-                        {activeTab === "dashboard" ? (
-                            <p>Loading dashboard data...</p>
-                        ) : (
-                            <Settings />
-                        )}
-                    </main>
+                <main className="dashboard">
+                    {activeTab === "dashboard" ? (
+                        <p>Loading dashboard data...</p>
+                    ) : (
+                        <Settings />
+                    )}
+                </main>
                 )}
             </>
         );
@@ -165,8 +165,8 @@ function AuthedApp({ user, onLogout }) {
     if (error) {
         return (
             <>
-                <Navbar
-                    deviceName="System Error"
+                <Navbar 
+                    deviceName="System Error" 
                     status="offline"
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
@@ -174,13 +174,13 @@ function AuthedApp({ user, onLogout }) {
                     onLogout={onLogout}
                 />
                 {activeTab === "appearance" ? appearancePage : (
-                    <main className="dashboard">
-                        {activeTab === "dashboard" ? (
-                            <p>Error: {error}</p>
-                        ) : (
-                            <Settings />
-                        )}
-                    </main>
+                <main className="dashboard">
+                    {activeTab === "dashboard" ? (
+                        <p>Error: {error}</p>
+                    ) : (
+                        <Settings />
+                    )}
+                </main>
                 )}
             </>
         );
@@ -204,8 +204,8 @@ function AuthedApp({ user, onLogout }) {
                     current={current}
                     thresholds={thresholds}
                     charts={charts}
-                    profile={activeProfile}
-                    onManageProfiles={() => setActiveTab("settings")}
+                    profile={activeProfile}                         // NEW
+                    onManageProfiles={() => setActiveTab("settings")} // NEW
                 />
             ) : activeTab === "appearance" ? (
                 appearancePage
