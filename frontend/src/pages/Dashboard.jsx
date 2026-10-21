@@ -11,7 +11,6 @@ import SensorCard from "../components/SensorCard.jsx";
 import SensorChart from "../components/SensorChart.jsx";
 import ProfileIndicator from "../components/ProfileIndicator.jsx";
 import CameraWidget from "../components/CameraWidget.jsx";
-import ProfileIndicator from "../components/ProfileIndicator.jsx"; 
 import AlertsButton from "../components/AlertsButton.jsx";   // NEW
 
 // NEW props: profile (active threshold profile), onManageProfiles (opens Settings)
