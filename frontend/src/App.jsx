@@ -15,13 +15,14 @@ import Dashboard from "./pages/Dashboard.jsx";
 import Settings from "./pages/Settings.jsx";
 import Appearance from "./pages/Appearance.jsx";
 import AlertModal from "./components/AlertModal.jsx";
-import AlertPanel from "./components/AlertPanel.jsx";   // NEW: alert history
+import AlertPanel from "./components/AlertPanel.jsx"; 
 import LandingPage from "./pages/LandingPage.jsx";
+import LoadingBar from "./components/LoadingBar.jsx";
 
 import useDashboardData from "./hooks/useDashboardData.js";
 
 /**
- * NEW (login): App is now the sign-in gate.
+ * App is now the sign-in gate.
  * - Shows LandingPage until someone signs in.
  * - On refresh, a saved token is checked with GET /api/auth/me, so a
  *   remembered user goes straight back to the dashboard.
@@ -102,7 +103,7 @@ function AuthedApp({ user, onLogout }) {
         </main>
     );
 
-    // CHANGED: fetch ALL unread alerts (not just danger) every 15 s.
+    // fetch ALL unread alerts (not just danger) every 15 s.
     // DANGER ones drive the popup; danger + warning drive the Alerts badge.
     // Unread only, so alerts the user already closed stay closed.
     // Bumping alertsVersion re-runs the poll right away (e.g. after "Mark all as read")
@@ -172,7 +173,11 @@ function AuthedApp({ user, onLogout }) {
                 {activeTab === "appearance" ? appearancePage : (
                 <main className="dashboard">
                     {activeTab === "dashboard" ? (
-                        <p>Loading dashboard data...</p>
+                        // NEW: small glowing bar under the loading text
+                        <div className="dashboard-loading">
+                            <p>Loading dashboard data...</p>
+                            <LoadingBar active={loading} />
+                        </div>
                     ) : (
                         <Settings />
                     )}
