@@ -9,6 +9,7 @@
  */
 import React, { useState } from "react";
 import "../styles/settings.css";
+import plusIcon from "../assets/icons/plus.png";   
 
 import ProfileCard from "../components/ProfileCard.jsx";
 import ProfileModal from "../components/ProfileModal.jsx";
@@ -37,7 +38,6 @@ function Settings() {
     };
 
     // Handlers
-
     // Open modal in create mode with defaults
     const handleCreate = () => {
         setEditingProfile({
@@ -45,8 +45,8 @@ function Settings() {
             ph_min: 5.5, ph_max: 6.5,
             temp_min: 18, temp_max: 28,
             humidity_min: 50, humidity_max: 70,
-            pressure_min: 990, pressure_max: 1030,   // NEW
-            aqi_min: 1, aqi_max: 2,                  // NEW
+            pressure_min: 990, pressure_max: 1030,  
+            aqi_min: 1, aqi_max: 2,   
         });
         setModalOpen(true);
     };
@@ -140,11 +140,12 @@ function Settings() {
             <div className="settings-header">
                 <h2 className="settings-title">Threshold Profiles</h2>
                 <button className="btn-create" onClick={handleCreate}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" strokeWidth="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
+                    {/* PNG icon */}
+                    <span
+                        className="btn-icon"
+                        style={{ "--icon": `url(${plusIcon})` }}
+                        aria-hidden="true"
+                    />
                     New Profile
                 </button>
             </div>
