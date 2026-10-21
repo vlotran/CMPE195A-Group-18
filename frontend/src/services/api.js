@@ -16,7 +16,7 @@ if (!import.meta.env.VITE_API_BASE_URL) {
     console.warn("[api] VITE_API_BASE_URL not set: using http://localhost:8000. Copy frontend/.env.example to frontend/.env.");
 }
 
-//  AUTH TOKEN (NEW: login) 
+//  AUTH TOKEN (NEW: login)
 // The token from /api/auth/login is kept in the browser and sent with every
 // request as "Authorization: Bearer <token>".
 //   "Remember me" checked   -> localStorage   (survives closing the browser;
@@ -96,7 +96,7 @@ async function fetchJSON(endpoint, options = {}) {
     return response.json();
 }
 
-//  AUTH (NEW: login) 
+//  AUTH (NEW: login)
 // Backend: backend/src/api/routes/auth.py
 
 /** POST /api/auth/register: create an account (gets copies of the example profiles) */
@@ -131,7 +131,7 @@ export async function fetchCurrentUser() {
     return fetchJSON("/api/auth/me");
 }
 
-// HEALTH & SYSTEM 
+// HEALTH & SYSTEM
 export async function fetchHealth() {
     return fetchJSON("/api/health");
 }
@@ -140,7 +140,7 @@ export async function fetchSystemStatus() {
     return fetchJSON("/api/status");
 }
 
-// SENSORS 
+// SENSORS
 export async function fetchCurrentReadings() {
     return fetchJSON("/api/sensors/current");
 }
@@ -167,6 +167,15 @@ export async function fetchSensorStatus() {
     return fetchJSON("/api/sensors/status");
 }
 
+// CAMERA
+export async function fetchCameraStatus() {
+    return fetchJSON("/api/camera/status");
+}
+
+export async function fetchCameraStreamToken() {
+    return fetchJSON("/api/camera/stream-token", { method: "POST" });
+}
+
 export async function fetchAllConfigurations() {
     return fetchJSON("/api/configurations/");
 }
@@ -175,7 +184,7 @@ export async function fetchActiveConfiguration() {
     return fetchJSON("/api/configurations/active");
 }
 /**
- * CONFIGURATIONS - CRUD 
+ * CONFIGURATIONS - CRUD
  * These call the backend endpoints in: backend/src/api/routes/configurations.py
  */
 
