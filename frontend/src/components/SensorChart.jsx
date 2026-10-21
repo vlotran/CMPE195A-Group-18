@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import "../styles/sensorChart.css";
 import { useTempUnit } from "../contexts/TempUnitContext.jsx";
 import { toDisplayTemp, tempSymbol } from "../utils/units.js";
+import { pickBucketMs, bucketSeries, splitAtGaps } from "../utils/downsample.js";   // NEW
 
 // Suffix for non-temperature metrics; temperature comes from the context
 const UNIT_LABEL = { humidity: "%", ph: "", pressure: " hPa", aqi_score: "" };
@@ -24,6 +25,18 @@ const X_LABEL_TARGET = { collapsed: 4, expanded: 12 };
 // Allowed spacing between labels (hours); smallest one that fits the target wins
 const HOUR_STEPS = [1, 2, 3, 4, 6, 12, 24];
 
+// downsampling. Draw at most this many points (one per time bucket):
+// 24 h -> 5-min buckets collapsed (288 points), 2-min buckets expanded (720 points).
+// Stats (average, min, max) still use every raw reading.
+
+const MAX_POINTS = { collapsed: 300, expanded: 720 };
+//  Air Quality is a 1-4 score: keep the WORST score per bucket and draw steps
+// (averaging scores would give meaningless values like 1.6)
+const STEP_METRICS = new Set(["aqi_score"]);
+// break the line when readings are missing for more than this many buckets
+// (e.g. the Pi was offline), instead of drawing a straight line across the gap
+const GAP_BUCKETS = 3;
+
 // Backend sends "YYYY-MM-DD HH:MM:SS" in UTC -> epoch ms
 const parseUtc = (timestamp) =>
     timestamp ? new Date(timestamp.replace(" ", "T") + "Z").getTime() : NaN;
@@ -38,6 +51,10 @@ const labelHourFormatter = new Intl.DateTimeFormat("en-US", {
 const labelDateFormatter = new Intl.DateTimeFormat("en-US", {
     timeZone: CHART_TIME_ZONE, month: "short", day: "numeric",
 });
+//tooltip time for a bucket (epoch ms)
+const tooltipTimeFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: CHART_TIME_ZONE, month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+});
 
 function SensorChart({title, metric, data = [], timestamps = []}) {
     const { tempUnit } = useTempUnit();
@@ -49,62 +66,94 @@ function SensorChart({title, metric, data = [], timestamps = []}) {
     };
 
     const unit = metric === "temperature" ? tempSymbol(tempUnit) : UNIT_LABEL[metric] ?? "";
-    const axisUnit = AXIS_HIDE_UNIT.has(metric) ? "" : unit;   // NEW
+    const axisUnit = AXIS_HIDE_UNIT.has(metric) ? "" : unit;  
 
     // Trim float noise from conversion (82.49000000000001)
     const fmt = (n) => Number(n.toFixed(2));
 
-    // CHANGED: all chart math is memoized so hovering (which re-renders on every
-    // index change) doesn't recompute ~2,880 points + the polyline string each time.
-    // Only recalculates when the data, timestamps, metric, or °C/°F setting change.
-    const chart = useMemo(() => {
+    const isStep = STEP_METRICS.has(metric);   // NEW
+
+    // split in two memos.
+    //  1) raw: unit conversion + stats from EVERY reading (only when data/unit change)
+    //  2) plot: downsampled points, lines, ticks (also when collapsed/expanded changes)
+    // Hovering re-renders on every move, so neither is recomputed then.
+    const raw = useMemo(() => {
         // Convert once, up front. The chart only displays, no threshold logic
-        const displayData =
+        const values =
             metric === "temperature" ? data.map((c) => toDisplayTemp(c, tempUnit)) : data;
+        const times = timestamps.map(parseUtc);
 
-        const hasData = displayData.length > 0;
-
+        const hasData = values.length > 0;
         // only fallback to 0/1 when there are no data at all.
-        const maxValue = hasData ? Math.max(...displayData) : 1;
-        const minValue = hasData ? Math.min(...displayData) : 0;
-        const range = maxValue - minValue || 1;
+        const maxValue = hasData ? Math.max(...values) : 1;
+        const minValue = hasData ? Math.min(...values) : 0;
+        // Average of ALL raw readings (already in the chosen unit), not the buckets
+        const avgValue = hasData ? values.reduce((sum, v) => sum + v, 0) / values.length : null;
 
-        // Average of the exact points plotted (already in the chosen unit)
-        const avgValue = hasData
-            ? displayData.reduce((sum, v) => sum + v, 0) / displayData.length
-            : null;
+        const finiteTimes = times.filter(Number.isFinite);
+        const tStart = finiteTimes.length ? Math.min(...finiteTimes) : 0;
+        const tEnd = finiteTimes.length ? Math.max(...finiteTimes) : 0;
 
+        return {
+            values, times, hasData, minValue, maxValue, avgValue, tStart, tEnd,
+            // time span the plotted data actually covers (oldest -> newest)
+            rangeStart: timestamps[0],
+            rangeEnd: timestamps[timestamps.length - 1],
+        };
+    }, [data, timestamps, metric, tempUnit]);
+
+    const plot = useMemo(() => {
+        const { values, times, minValue, maxValue, tStart, tEnd } = raw;
+        const spanMs = tEnd - tStart;
+
+        // one point per time bucket (average, or worst score for Air Quality)
+        const bucketMs = pickBucketMs(spanMs, isExpanded ? MAX_POINTS.expanded : MAX_POINTS.collapsed);
+        const buckets = bucketSeries(values, times, bucketMs, isStep ? "max" : "mean");
+
+        // Y range: Air Quality uses whole-number ticks (1, 2, 3...); others the data range
+        let yMin = minValue;
+        let yMax = maxValue;
+        if (isStep) {
+            yMin = Math.floor(minValue);
+            yMax = Math.max(Math.ceil(maxValue), yMin + 1);
+        }
+        const range = yMax - yMin || 1;
         // shared value -> y% mapping
-        const getY = (value) => TOP_PADDING + (1 - (value - minValue) / range) * USABLE_HEIGHT;
+        const getY = (value) => TOP_PADDING + (1 - (value - yMin) / range) * USABLE_HEIGHT;
+        // x by TIME (not by index), so gaps show up where they really are
+        const getX = (t) => (spanMs > 0 ? ((t - tStart) / spanMs) * 100 : 50);
 
-        // Points are evenly spaced by index across 0–100% width
-        const points = displayData.map((value, index) => {
-            const x = (index / (displayData.length - 1 || 1)) * 100;
-            return { x, y: getY(value), value, timestamp: timestamps[index] };
+        const points = buckets.map((b) => ({
+            x: getX(b.t), y: getY(b.value), value: b.value, start: b.start, count: b.count,
+        }));
+
+        // one polyline per continuous segment; steps for Air Quality
+        const lines = splitAtGaps(buckets, bucketMs * GAP_BUCKETS).map((seg) => {
+            const pts = [];
+            seg.forEach((b, i) => {
+                const x = getX(b.t);
+                const y = getY(b.value);
+                if (isStep && i > 0) pts.push(`${x},${getY(seg[i - 1].value)}`);   // flat, then jump
+                pts.push(`${x},${y}`);
+            });
+            return pts.join(" ");
         });
 
-        // evenly spaced tick value across actual data range
-        const ticks = Array.from({ length: TICK_COUNT + 1 }, (_, i) => {
-            const value = minValue + (range * i) / TICK_COUNT;
-            return { value: Math.round(value * 10) / 10, y: getY(value) };
-        });
+        // Y-axis ticks: Air Quality = whole numbers; others evenly spaced
+        const tickValues = isStep
+            ? Array.from({ length: yMax - yMin + 1 }, (_, i) => yMin + i)
+            : Array.from({ length: TICK_COUNT + 1 }, (_, i) => yMin + (range * i) / TICK_COUNT);
+        const ticks = tickValues.map((value) => ({ value: Math.round(value * 10) / 10, y: getY(value) }));
 
-        const polylinePoints = points.map((p) => `${p.x},${p.y}`).join(" ");
-
-        // NEW: find where the data crosses each whole hour.
-        // LA is offset from UTC by whole hours, so a change in the UTC hour
-        // number is also an hour boundary locally.
+        // hour marks straight from the time range (exact, even across gaps).
+        // LA is offset from UTC by whole hours, so whole UTC hours are whole local hours.
         const hourMarks = [];
-        let prevHour = null;
-        points.forEach((p) => {
-            const ms = parseUtc(p.timestamp);
-            if (Number.isNaN(ms)) return;
-            const hourNum = Math.floor(ms / HOUR_MS);
-            if (prevHour !== null && hourNum !== prevHour) {
-                const boundary = new Date(hourNum * HOUR_MS);
+        if (spanMs > 0) {
+            for (let h = Math.ceil(tStart / HOUR_MS) * HOUR_MS; h <= tEnd; h += HOUR_MS) {
+                const boundary = new Date(h);
                 const localHour = Number(hourFormatter.format(boundary));
                 hourMarks.push({
-                    x: p.x,
+                    x: getX(h),
                     localHour,
                     // Midnight include  the date; other hours show "6 AM"
                     label: localHour === 0
@@ -112,27 +161,15 @@ function SensorChart({title, metric, data = [], timestamps = []}) {
                         : labelHourFormatter.format(boundary),
                 });
             }
-            prevHour = hourNum;
-        });
+        }
 
-        // Hours covered by the data, used to pick label spacing
-        const spanHours = timestamps.length > 1
-            ? (parseUtc(timestamps[timestamps.length - 1]) - parseUtc(timestamps[0])) / HOUR_MS
-            : 0;
+        return { points, lines, ticks, hourMarks, spanHours: spanMs / HOUR_MS, bucketMinutes: bucketMs / 60000 };
+    }, [raw, isExpanded, isStep]);
 
-        return {
-            hasData, minValue, maxValue, avgValue, points, ticks, polylinePoints,
-            hourMarks, spanHours,
-            // time span the plotted data actually covers (oldest -> newest)
-            rangeStart: timestamps[0],
-            rangeEnd: timestamps[timestamps.length - 1],
-        };
-    }, [data, timestamps, metric, tempUnit]);
+    const { hasData, minValue, maxValue, avgValue, rangeStart, rangeEnd } = raw;
+    const { points, lines, ticks, hourMarks, spanHours, bucketMinutes } = plot;
 
-    const { hasData, minValue, maxValue, avgValue, points, ticks, polylinePoints,
-            hourMarks, spanHours, rangeStart, rangeEnd } = chart;
-
-    // NEW: pick which hour marks to label. Collapsed = few labels, expanded = more.
+    // pick which hour marks to label. Collapsed = few labels, expanded = more.
     // Step adapts to the data span, so 2h of data still gets labels, not just 24h.
     const xTicks = useMemo(() => {
         const target = isExpanded ? X_LABEL_TARGET.expanded : X_LABEL_TARGET.collapsed;
@@ -140,15 +177,22 @@ function SensorChart({title, metric, data = [], timestamps = []}) {
         return hourMarks.filter((m) => m.localHour % step === 0);
     }, [hourMarks, spanHours, isExpanded]);
 
-    // NEW: one handler replaces ~2,880 invisible <circle> elements.
-    // Points are evenly spaced, so the cursor's horizontal position maps
-    // directly to the nearest index — exact, and the dot lands under the cursor.
+    // points are placed by time now (not evenly), so find the point
+    // nearest the cursor with a binary search on x.
     const handleMouseMove = (e) => {
         if (!points.length) return;
         const rect = e.currentTarget.getBoundingClientRect();
-        const frac = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+        const xPct = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1) * 100;
+        let lo = 0;
+        let hi = points.length - 1;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (points[mid].x < xPct) lo = mid + 1;
+            else hi = mid;
+        }
+        const nearest = lo > 0 && xPct - points[lo - 1].x < points[lo].x - xPct ? lo - 1 : lo;
         // React skips the re-render when the index hasn't changed
-        setHoveredPoint(Math.round(frac * (points.length - 1)));
+        setHoveredPoint(nearest);
     };
 
     const handleMouseLeave = () => setHoveredPoint(null);
@@ -190,12 +234,12 @@ function SensorChart({title, metric, data = [], timestamps = []}) {
                 {isExpanded && (
                     <aside className="chart-summary">
                         <div className="summary-avg">
-                            {hasData ? `${fmt(avgValue)}${unit}` : "--"}
+                            {hasData ? `${fmt(avgValue)}${unit}` : "-"}
                         </div>
                         <div className="summary-label">Average · Last 24h</div>
                         {hasData && (
                             <div className="summary-range">
-                                {formatTimestamp(rangeStart)} – {formatTimestamp(rangeEnd)}
+                                {formatTimestamp(rangeStart)} - {formatTimestamp(rangeEnd)}
                             </div>
                         )}
                         <div className="summary-minmax">
@@ -219,8 +263,7 @@ function SensorChart({title, metric, data = [], timestamps = []}) {
 
                     {/* mouse handlers live on the plot area itself, and the
                         tooltip is inside it, so dot, tooltip and cursor share the
-                        same coordinate box (previously the tooltip was offset by
-                        the axis-label column). */}
+                        same coordinate box  */}
                     <div
                         className="chart-plot-area"
                         onMouseMove={handleMouseMove}
@@ -253,22 +296,23 @@ function SensorChart({title, metric, data = [], timestamps = []}) {
                                 />
                             ))}
 
-                            {/* Line chart */}
-                            <polyline
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                points={polylinePoints}
-                                vectorEffect="non-scaling-stroke"
-                            />
-                            {/* REMOVED: one invisible <circle> per point (caused lag
-                                and stretched, overlapping hit areas) */}
+                            {/* one line per continuous stretch of data (breaks at gaps).
+                                Downsampled, so ~300 points instead of ~2,880. */}
+                            {lines.map((pts, i) => (
+                                <polyline
+                                    key={i}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinejoin="round"
+                                    points={pts}
+                                    vectorEffect="non-scaling-stroke"
+                                />
+                            ))}
                         </svg>
 
-                        {/* NEW: x-axis time labels. Inside the plot area so their
-                            x% lines up exactly with the data points. HTML (not SVG)
-                            so text isn't stretched. Edge labels are aligned inward
-                            so they don't get clipped. */}
+                        {/* x-axis time labels. Inside the plot area so their
+                            x% lines up exactly with the data points. Edge labels are aligned inward */}
                         <div className="chart-x-labels">
                             {xTicks.map((tick, i) => (
                                 <span
@@ -301,7 +345,11 @@ function SensorChart({title, metric, data = [], timestamps = []}) {
                                     {fmt(hovered.value)}{unit}
                                 </div>
                                 <div className="tooltip-timestamp">
-                                    {formatTimestamp(hovered.timestamp)}
+                                    {tooltipTimeFormatter.format(new Date(hovered.start))}
+                                </div>
+                                {/* NEW: say what the point is, since it's a bucket, not one reading */}
+                                <div className="tooltip-note">
+                                    {isStep ? `Worst in ${bucketMinutes} min` : `${bucketMinutes}-min average`}
                                 </div>
                             </div>
                         )}
