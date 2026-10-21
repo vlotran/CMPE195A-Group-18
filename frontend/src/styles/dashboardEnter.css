@@ -1,0 +1,59 @@
+/*
+ * NEW: entrance animation for the Dashboard page (fade in + slide up).
+ * Runs when the dashboard appears: after a reload once data has loaded,
+ * and when switching back to the Dashboard tab.
+ *
+ * Order: toolbar -> camera -> sensor cards (one by one) -> charts (one by one).
+ *
+ * Only on .dashboard-enter (the Dashboard page), not on Settings/Appearance,
+ * which also use the .dashboard class.
+ *
+ * fill-mode "backwards" (not "both"): items stay hidden during their delay, but
+ * once the animation ends it lets go, so the cards' hover lift (transform)
+ * still works.
+ */
+@keyframes dashboard-rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Each top-level section: toolbar, camera, card grid, chart grid */
+.dashboard-enter > * {
+    animation: dashboard-rise 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+.dashboard-enter > :nth-child(1) { animation-delay: 0ms; }
+.dashboard-enter > :nth-child(2) { animation-delay: 80ms; }
+.dashboard-enter > :nth-child(3) { animation-delay: 160ms; }
+.dashboard-enter > :nth-child(4) { animation-delay: 240ms; }
+
+/* Cards and charts also come in one after another, inside their section.
+   The sections themselves don't animate, so items aren't animated twice. */
+.dashboard-enter > .card-grid,
+.dashboard-enter > .sensor-chart-grid {
+    animation: none;
+}
+.dashboard-enter .card-grid > *,
+.dashboard-enter .sensor-chart-grid > * {
+    animation: dashboard-rise 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+/* cards start after the camera (160 ms), 70 ms apart */
+.dashboard-enter .card-grid > :nth-child(1) { animation-delay: 160ms; }
+.dashboard-enter .card-grid > :nth-child(2) { animation-delay: 230ms; }
+.dashboard-enter .card-grid > :nth-child(3) { animation-delay: 300ms; }
+.dashboard-enter .card-grid > :nth-child(4) { animation-delay: 370ms; }
+.dashboard-enter .card-grid > :nth-child(5) { animation-delay: 440ms; }
+/* charts start after the cards, 70 ms apart */
+.dashboard-enter .sensor-chart-grid > :nth-child(1) { animation-delay: 400ms; }
+.dashboard-enter .sensor-chart-grid > :nth-child(2) { animation-delay: 470ms; }
+.dashboard-enter .sensor-chart-grid > :nth-child(3) { animation-delay: 540ms; }
+.dashboard-enter .sensor-chart-grid > :nth-child(4) { animation-delay: 610ms; }
+.dashboard-enter .sensor-chart-grid > :nth-child(5) { animation-delay: 680ms; }
+
+/* Users who turned on "reduce motion" in their OS get no animation */
+@media (prefers-reduced-motion: reduce) {
+    .dashboard-enter > *,
+    .dashboard-enter .card-grid > *,
+    .dashboard-enter .sensor-chart-grid > * {
+        animation: none;
+    }
+}
