@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
     getAlerts,
+    markAlertRead, 
     getToken,
     fetchCurrentUser,
     logoutUser,
@@ -74,12 +75,12 @@ function App() {
 
 /**
  * The dashboard for a signed-in user.
- * CHANGED: this was the body of App; it now only mounts after login.
+ * this was the body of App; it now only mounts after login.
  */
 function AuthedApp({ user, onLogout }) {
     const {
         device, current, thresholds, charts,
-        activeProfile, refreshProfile,          // NEW: for ProfileIndicator
+        activeProfile, refreshProfile, 
         loading, error,
     } = useDashboardData();
     // "dashboard" = show sensor cards and charts
@@ -105,7 +106,8 @@ function AuthedApp({ user, onLogout }) {
         const poll = async () => {
             try {
                 // CHANGED: backend severity is now normal|warning|danger (was "critical")
-                const alerts = await getAlerts({ severity: "danger", limit: 20 });
+                // CHANGED: unread only, so alerts the user already closed stay closed
+                const alerts = await getAlerts({ severity: "danger", limit: 20, unreadOnly: true });
                 if (!cancelled) setDangerAlerts(alerts);
             } catch (e) {
                 console.error("Alert poll failed:", e);   // don't break the dashboard
@@ -117,7 +119,7 @@ function AuthedApp({ user, onLogout }) {
         return () => { cancelled = true; clearInterval(id); };
     }, []);
 
-    // NEW: re-read the active profile whenever the Dashboard tab is shown, so a profile
+    // re-read the active profile whenever the Dashboard tab is shown, so a profile
     // changed in Settings shows up on the indicator AND the card thresholds right away.
     // (Skips the very first render; the initial load already fetched it.)
     const seenDashboard = useRef(false);
@@ -130,10 +132,17 @@ function AuthedApp({ user, onLogout }) {
     const visible = dangerAlerts.filter((a) => !dismissed.has(a.id));
 
     const handleClose = () => {
+        const ids = visible.map((a) => a.id);
+        // Hide right away (also covers a failed request until the next reload)
         setDismissed((prev) => {
             const next = new Set(prev);
-            visible.forEach((a) => next.add(a.id));
+            ids.forEach((id) => next.add(id));
             return next;
+        });
+        // remember it on the backend, so a reload / another device doesn't re-show them
+        Promise.allSettled(ids.map((id) => markAlertRead(id))).then((results) => {
+            const failed = results.filter((r) => r.status === "rejected").length;
+            if (failed) console.error(`Could not mark ${failed} alert(s) as read`);
         });
     };
     
@@ -204,8 +213,8 @@ function AuthedApp({ user, onLogout }) {
                     current={current}
                     thresholds={thresholds}
                     charts={charts}
-                    profile={activeProfile}                         // NEW
-                    onManageProfiles={() => setActiveTab("settings")} // NEW
+                    profile={activeProfile}   
+                    onManageProfiles={() => setActiveTab("settings")} 
                 />
             ) : activeTab === "appearance" ? (
                 appearancePage
