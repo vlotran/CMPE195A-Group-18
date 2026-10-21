@@ -76,9 +76,9 @@
 }
 .nav-logout:hover,
 .nav-logout:active {
-    background: rgba(224, 64, 64, 0.12); 
+    background: #e04040; 
     border-color: #e04040;
-    color: #e04040;
+    color: var(--on-accent);      
 }
 /* index.css rings every focused button; keep it for keyboard users only */
 .nav-logout:focus { outline: none; }
