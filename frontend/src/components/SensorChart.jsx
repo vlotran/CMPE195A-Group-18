@@ -29,7 +29,7 @@ const HOUR_STEPS = [1, 2, 3, 4, 6, 12, 24];
 // 24 h -> 5-min buckets collapsed (288 points), 2-min buckets expanded (720 points).
 // Stats (average, min, max) still use every raw reading.
 
-const MAX_POINTS = { collapsed: 300, expanded: 720 };
+const MAX_POINTS = { collapsed: 400, expanded: 850 };
 //  Air Quality is a 1-4 score: keep the WORST score per bucket and draw steps
 // (averaging scores would give meaningless values like 1.6)
 const STEP_METRICS = new Set(["aqi_score"]);
