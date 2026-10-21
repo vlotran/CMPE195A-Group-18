@@ -1,0 +1,65 @@
+.camera-widget {
+    width: min(100%, 560px);
+    margin: 0 auto 24px;
+    padding: 14px 14px 12px;
+    border-radius: 16px;
+    background: rgba(var(--fg-rgb), 0.05);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.camera-widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.camera-widget-header h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.2rem;
+}
+
+.camera-status {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.camera-status.ready {
+    color: var(--ok);
+    background: rgba(46, 204, 113, 0.16);
+}
+
+.camera-status.checking {
+    color: var(--warn);
+    background: rgba(241, 196, 15, 0.16);
+}
+
+.camera-status.unavailable {
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.16);
+}
+
+.camera-stream,
+.camera-placeholder {
+    display: block;
+    width: 100%;
+    min-height: 180px;
+    max-height: 320px;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.camera-placeholder {
+    display: grid;
+    place-items: center;
+    color: var(--text);
+    text-align: center;
+}

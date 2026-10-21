@@ -13,15 +13,15 @@ from backend.src.services.data_collector import data_collector
 from backend.src.utils.logger import logger
 
 # Import routes
-from backend.src.api.routes import health, sensors, configurations, alerts, auth
-
+from backend.src.api.routes import camera, health, sensors, configurations, alerts, auth
+from backend.src.camera import camera_manager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     Startup and shutdown events
     """
-    # STARTUP 
+    # STARTUP
     logger.info("Starting Smart Hydroponic System...")
 
     # Initialize database
@@ -52,6 +52,7 @@ async def lifespan(app: FastAPI):
 
     # Stop background data collection
     await data_collector.stop()
+    camera_manager.stop()
 
     logger.info("Goodbye!")
 
@@ -82,7 +83,8 @@ app.include_router(sensors.router)
 app.include_router(configurations.router)
 app.include_router(alerts.router)
 
-app.include_router(auth.router)  # NEW: login/logout
+app.include_router(auth.router)
+app.include_router(camera.router)
 
 
 @app.get("/")

@@ -4,6 +4,7 @@ from . import health
 from . import sensors
 from . import configurations
 from . import alerts
-from . import auth  # NEW: login/logout
+from . import auth
+from . import camera
 
-__all__ = ["health", "sensors", "configurations", "alerts", "auth"]
+__all__ = ["health", "sensors", "configurations", "alerts", "auth", "camera"]
