@@ -18,11 +18,10 @@
     background: rgba(var(--fg-rgb), 0.08);
     /* glow goes on the wrapper so overflow:hidden doesn't cut it off */
     filter: drop-shadow(0 0 4px var(--accent)) drop-shadow(0 0 8px var(--accent));
-    opacity: 0;
-    transition: opacity 0.3s ease;
     pointer-events: none;
+    animation: lb-fade-in 0.3s ease;
 }
-.loading-bar.is-visible { opacity: 1; }
+
 
 /* Glowing segment that sweeps left to right on a loop */
 .loading-bar__fill {
@@ -53,7 +52,10 @@
     from { transform: translateX(-100%); }
     to   { transform: translateX(250%); }
 }
-
+@keyframes lb-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
 /* Reduced motion: no sweep, just a soft pulse */
 @media (prefers-reduced-motion: reduce) {
     .loading-bar__fill {
