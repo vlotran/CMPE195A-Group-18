@@ -12,14 +12,16 @@ import SensorChart from "../components/SensorChart.jsx";
 import ProfileIndicator from "../components/ProfileIndicator.jsx";
 import CameraWidget from "../components/CameraWidget.jsx";
 import AlertsButton from "../components/AlertsButton.jsx";   // NEW
+import "../styles/dashboardEnter.css";   // NEW: fade-in / slide-up when the dashboard appears
 
 // NEW props: profile (active threshold profile), onManageProfiles (opens Settings)
 // NEW props: alertCount (unread warning/danger), onOpenAlerts (opens alert history)
 
 function Dashboard({ current, thresholds, charts, profile, onManageProfiles, alertCount, onOpenAlerts }) {
 
+    //"dashboard-enter" = fade-in / slide-up entrance (styles/dashboardEnter.css)
     return (
-        <main className="dashboard">
+        <main className="dashboard dashboard-enter">
             {/* NEW: toolbar row: active profile on the left, alert history on the right */}
             <div className="dashboard-toolbar">
                 <ProfileIndicator profile={profile} onManage={onManageProfiles} />

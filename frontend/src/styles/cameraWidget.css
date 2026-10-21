@@ -28,21 +28,25 @@
     border-radius: 999px;
     font-size: 0.8rem;
     font-weight: 600;
+    border: 1px solid; 
 }
 
-.camera-status.ready {
+.camera-status.ready {              /* "Online" */
     color: var(--ok);
-    background: rgba(46, 204, 113, 0.16);
+    background: rgba(35, 159, 87, 0.2);
+    border-color: var(--ok); 
 }
 
 .camera-status.checking {
     color: var(--warn);
-    background: rgba(241, 196, 15, 0.16);
+    background: rgba(214, 174, 13, 0.2);
+    border-color: var(--warn);      /* NEW */
 }
 
 .camera-status.unavailable {
     color: #e74c3c;
-    background: rgba(231, 76, 60, 0.16);
+    background: rgba(231, 76, 60, 0.2);
+    border-color: red;              
 }
 
 .camera-stream,
