@@ -6,6 +6,7 @@ development machines that do not have a Raspberry Pi camera attached.
 
 from __future__ import annotations
 
+import io
 import secrets
 import time
 from threading import Condition, Lock
@@ -20,7 +21,7 @@ except ImportError:  # pragma: no cover - exercised only off the Pi
     FileOutput = None
 
 
-class StreamingOutput:
+class StreamingOutput(io.BufferedIOBase):
     """Receives JPEG frames from Picamera2 and makes them available to clients."""
 
     def __init__(self) -> None:

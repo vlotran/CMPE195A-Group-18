@@ -1,6 +1,13 @@
 import importlib
+import io
 import threading
 import time
+
+
+def test_streaming_output_implements_buffered_io_contract():
+    camera_module = importlib.import_module("backend.src.camera.camera_manager")
+
+    assert isinstance(camera_module.StreamingOutput(), io.BufferedIOBase)
 
 
 def test_concurrent_start_initializes_camera_once(monkeypatch):
