@@ -71,7 +71,7 @@ export default function useDashboardData() {
                         "humidity"
                     ),
                     ph: mapHistoricalRowsToMetricChart(phHistory, "ph"),
-                    // NEW: air pressure and aqi from BME680
+                    // air pressure and aqi from BME680
                     pressure: mapHistoricalRowsToMetricChart(bme680History, "pressure"),
                     aqi_score: mapHistoricalRowsToMetricChart(bme680History, "aqi_score"),
                 });
