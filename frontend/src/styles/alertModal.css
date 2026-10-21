@@ -7,6 +7,8 @@
     z-index: 1000;
 }
 .alert-modal {
+    text-align: left;   
+    color: var(--text);
     background: var(--surface-alt);
     border: 2px solid #e04040;
     border-radius: 12px;
@@ -26,4 +28,8 @@
     width: 100%; padding: 10px;
     background: #e04040; color: #fff;
     border: none; border-radius: 6px; cursor: pointer;
+    font: inherit; font-weight: 600;
 }
+.alert-modal-close:hover { background: #c83030; }
+.alert-modal-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.alert-modal-item:last-child { border-bottom: none; }

@@ -11,14 +11,21 @@ import SensorCard from "../components/SensorCard.jsx";
 import SensorChart from "../components/SensorChart.jsx";
 import ProfileIndicator from "../components/ProfileIndicator.jsx";
 import CameraWidget from "../components/CameraWidget.jsx";
+import ProfileIndicator from "../components/ProfileIndicator.jsx"; 
+import AlertsButton from "../components/AlertsButton.jsx";   // NEW
 
 // NEW props: profile (active threshold profile), onManageProfiles (opens Settings)
-function Dashboard({ current, thresholds, charts, profile, onManageProfiles }) {
+// NEW props: alertCount (unread warning/danger), onOpenAlerts (opens alert history)
+
+function Dashboard({ current, thresholds, charts, profile, onManageProfiles, alertCount, onOpenAlerts }) {
 
     return (
         <main className="dashboard">
-            {/* NEW: which profile the cards below are judged against */}
-            <ProfileIndicator profile={profile} onManage={onManageProfiles} />
+            {/* NEW: toolbar row: active profile on the left, alert history on the right */}
+            <div className="dashboard-toolbar">
+                <ProfileIndicator profile={profile} onManage={onManageProfiles} />
+                {onOpenAlerts && <AlertsButton count={alertCount} onClick={onOpenAlerts} />}
+            </div>
 
             <CameraWidget />
 
@@ -83,7 +90,7 @@ function Dashboard({ current, thresholds, charts, profile, onManageProfiles }) {
                     data={charts?.ph?.data ?? []}
                     timestamps={charts?.ph?.timestamps ?? []}
                 />
-                {/* NEW: BME680 charts */}
+                {/* BME680 charts */}
                 <SensorChart
                     title="Air Pressure Chart (hPa)"
                     metric="pressure"

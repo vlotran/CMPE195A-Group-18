@@ -217,7 +217,7 @@ function SensorChart({title, metric, data = [], timestamps = []}) {
                         ))}
                     </div>
 
-                    {/* CHANGED: mouse handlers live on the plot area itself, and the
+                    {/* mouse handlers live on the plot area itself, and the
                         tooltip is inside it, so dot, tooltip and cursor share the
                         same coordinate box (previously the tooltip was offset by
                         the axis-label column). */}
@@ -242,7 +242,7 @@ function SensorChart({title, metric, data = [], timestamps = []}) {
                                 />
                             ))}
 
-                            {/* NEW: faint vertical gridline at each labeled hour */}
+                            {/*faint vertical gridline at each labeled hour */}
                             {xTicks.map((tick, i) => (
                                 <line
                                     key={`x-${i}`}

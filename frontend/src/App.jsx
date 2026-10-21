@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
     getAlerts,
+    markAlertRead, 
     getToken,
     fetchCurrentUser,
     logoutUser,
@@ -14,6 +15,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import Settings from "./pages/Settings.jsx";
 import Appearance from "./pages/Appearance.jsx";
 import AlertModal from "./components/AlertModal.jsx";
+import AlertPanel from "./components/AlertPanel.jsx";   // NEW: alert history
 import LandingPage from "./pages/LandingPage.jsx";
 
 import useDashboardData from "./hooks/useDashboardData.js";
@@ -74,19 +76,21 @@ function App() {
 
 /**
  * The dashboard for a signed-in user.
- * CHANGED: this was the body of App; it now only mounts after login.
+ * this was the body of App; it now only mounts after login.
  */
 function AuthedApp({ user, onLogout }) {
     const {
         device, current, thresholds, charts,
-        activeProfile, refreshProfile,          // NEW: for ProfileIndicator
+        activeProfile, refreshProfile, 
         loading, error,
     } = useDashboardData();
     // "dashboard" = show sensor cards and charts
     // "settings"  = show threshold profile management
     // "appearance" = show theme + temperature unit buttons
     const [activeTab, setActiveTab] = useState("dashboard");
-    const [dangerAlerts, setDangerAlerts] = useState([]);
+    // all unread alerts (one poll feeds the DANGER popup AND the Alerts badge)
+    const [unreadAlerts, setUnreadAlerts] = useState([]);
+    const [alertsOpen, setAlertsOpen] = useState(false);   // history panel
     // Per-session dismissals, intentionally not persisted, so a refresh re-shows
     const [dismissed, setDismissed] = useState(() => new Set());
 
@@ -98,26 +102,28 @@ function AuthedApp({ user, onLogout }) {
         </main>
     );
 
-    // Poll alongside existing sensor polling
+    // CHANGED: fetch ALL unread alerts (not just danger) every 15 s.
+    // DANGER ones drive the popup; danger + warning drive the Alerts badge.
+    // Unread only, so alerts the user already closed stay closed.
+    // Bumping alertsVersion re-runs the poll right away (e.g. after "Mark all as read")
+    const [alertsVersion, setAlertsVersion] = useState(0);
     useEffect(() => {
         let cancelled = false;
-
         const poll = async () => {
             try {
-                // CHANGED: backend severity is now normal|warning|danger (was "critical")
-                const alerts = await getAlerts({ severity: "danger", limit: 20 });
-                if (!cancelled) setDangerAlerts(alerts);
+                const alerts = await getAlerts({ limit: 50, unreadOnly: true });
+                if (!cancelled) setUnreadAlerts(alerts);
             } catch (e) {
                 console.error("Alert poll failed:", e);   // don't break the dashboard
             }
         };
-
         poll();
         const id = setInterval(poll, 15000);
         return () => { cancelled = true; clearInterval(id); };
-    }, []);
+    }, [alertsVersion]);
 
-    // NEW: re-read the active profile whenever the Dashboard tab is shown, so a profile
+
+    // re-read the active profile whenever the Dashboard tab is shown, so a profile
     // changed in Settings shows up on the indicator AND the card thresholds right away.
     // (Skips the very first render; the initial load already fetched it.)
     const seenDashboard = useRef(false);
@@ -127,13 +133,27 @@ function AuthedApp({ user, onLogout }) {
         seenDashboard.current = true;
     }, [activeTab, loading, refreshProfile]);
 
+    const dangerAlerts = unreadAlerts.filter((a) => a.severity === "danger");
     const visible = dangerAlerts.filter((a) => !dismissed.has(a.id));
+    // badge count = unread warning + danger. Skips ones just closed in the popup,
+    // so the badge drops immediately instead of at the next poll.
+    // Recoveries back to normal aren't worth a badge.
+    const alertCount = unreadAlerts.filter(
+        (a) => a.severity !== "normal" && !dismissed.has(a.id)
+    ).length;
 
     const handleClose = () => {
+        const ids = visible.map((a) => a.id);
+        // Hide right away (also covers a failed request until the next reload)
         setDismissed((prev) => {
             const next = new Set(prev);
-            visible.forEach((a) => next.add(a.id));
+            ids.forEach((id) => next.add(id));
             return next;
+        });
+        // remember it on the backend, so a reload / another device doesn't re-show them
+        Promise.allSettled(ids.map((id) => markAlertRead(id))).then((results) => {
+            const failed = results.filter((r) => r.status === "rejected").length;
+            if (failed) console.error(`Could not mark ${failed} alert(s) as read`);
         });
     };
     
@@ -204,8 +224,10 @@ function AuthedApp({ user, onLogout }) {
                     current={current}
                     thresholds={thresholds}
                     charts={charts}
-                    profile={activeProfile}                         // NEW
-                    onManageProfiles={() => setActiveTab("settings")} // NEW
+                    profile={activeProfile}   
+                    onManageProfiles={() => setActiveTab("settings")} 
+                    alertCount={alertCount} 
+                    onOpenAlerts={() => setAlertsOpen(true)}  
                 />
             ) : activeTab === "appearance" ? (
                 appearancePage
@@ -214,7 +236,14 @@ function AuthedApp({ user, onLogout }) {
                     <Settings />
                 </main>
             )}
-            {/*Alert Modal - use when threshold is on DANGER */}
+            {/* alert history panel (opened from the Dashboard's Alerts button) */}
+            <AlertPanel
+                open={alertsOpen}
+                onClose={() => setAlertsOpen(false)}
+                onChanged={() => setAlertsVersion((v) => v + 1)}   // refresh the badge after "Mark all as read"
+            />
+
+            {/*Alert Modal: use when threshold is on DANGER */}
             <AlertModal alerts={visible} onClose={handleClose} />
         </>
     );

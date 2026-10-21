@@ -17,6 +17,7 @@ if (!import.meta.env.VITE_API_BASE_URL) {
 }
 
 //  AUTH TOKEN (NEW: login)
+//  AUTH TOKEN
 // The token from /api/auth/login is kept in the browser and sent with every
 // request as "Authorization: Bearer <token>".
 //   "Remember me" checked   -> localStorage   (survives closing the browser;
@@ -57,13 +58,13 @@ export const AUTH_EXPIRED_EVENT = "auth:expired";
 
 async function fetchJSON(endpoint, options = {}) {
     const token = getToken();
-    // CHANGED: build headers last. Before, `...options` came after `headers`,
+    // build headers last. Before, `...options` came after `headers`,
     // so passing options.headers silently dropped Content-Type.
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),   // NEW
+            ...(token ? { Authorization: `Bearer ${token}` } : {}), 
             ...(options.headers || {}),
         },
     });
@@ -75,7 +76,7 @@ async function fetchJSON(endpoint, options = {}) {
             if (typeof errorData?.detail === "string") {
                 message = errorData.detail;
             } else if (Array.isArray(errorData?.detail)) {
-                // NEW: FastAPI validation errors (422) arrive as a list
+                // FastAPI validation errors (422) arrive as a list
                 message = errorData.detail
                     .map((d) => String(d.msg).replace(/^Value error, /, ""))
                     .join(". ");
@@ -84,7 +85,7 @@ async function fetchJSON(endpoint, options = {}) {
             // ignore JSON parse errors
         }
 
-        // NEW: a rejected token means the session is over. Login itself also
+        // a rejected token means the session is over. Login itself also
         // returns 401 (wrong password), but there is no token yet in that case.
         if (response.status === 401 && token) {
             clearToken();
@@ -97,6 +98,7 @@ async function fetchJSON(endpoint, options = {}) {
 }
 
 //  AUTH (NEW: login)
+//  AUTH 
 // Backend: backend/src/api/routes/auth.py
 
 /** POST /api/auth/register: create an account (gets copies of the example profiles) */
@@ -252,9 +254,16 @@ export async function fetchDashboardBootstrap() {
     return { systemStatus, latestReadings, activeConfiguration };
 }
 
-export async function getAlerts({ severity, limit = 20 } = {}) {
+// unreadOnly -> only alerts the user hasn't closed yet
+export async function getAlerts({ severity, limit = 20, unreadOnly = false } = {}) {
     const params = new URLSearchParams({ limit: String(limit) });
     if (severity) params.set("severity", severity);
-    // CHANGED: goes through fetchJSON so the login token is sent (alerts are per user)
+    if (unreadOnly) params.set("unread_only", "true");
+    // goes through fetchJSON so the login token is sent (alerts are per user)
     return fetchJSON(`/api/alerts/?${params}`);
+}
+
+// mark one alert as read (backend: PATCH /api/alerts/{id}/read)
+export async function markAlertRead(alertId) {
+    return fetchJSON(`/api/alerts/${alertId}/read`, { method: "PATCH" });
 }
