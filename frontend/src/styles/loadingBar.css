@@ -1,0 +1,69 @@
+/* Small glowing loading bar shown under "Loading dashboard data..."
+ * Colors come from styles/theme.css (orange in dark, blue in light) */
+
+/* Center the text and the bar together */
+.dashboard-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.loading-bar {
+    position: relative;
+    width: min(220px, 60%);              
+    height: 3px;
+    border-radius: 999px;
+    overflow: hidden; 
+    background: rgba(var(--fg-rgb), 0.08);
+    /* glow goes on the wrapper so overflow:hidden doesn't cut it off */
+    filter: drop-shadow(0 0 4px var(--accent)) drop-shadow(0 0 8px var(--accent));
+    pointer-events: none;
+    animation: lb-fade-in 0.3s ease;
+}
+
+
+/* Glowing segment that sweeps left to right on a loop */
+.loading-bar__fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 40%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, var(--accent) 60%);
+    animation: lb-sweep 1.2s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+
+/* Bright head at the leading edge */
+.loading-bar__fill::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 24px;
+    height: 100%;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 40%, white);
+}
+
+/* Start off-screen left, end off-screen right (40% wide → 250% travel) */
+@keyframes lb-sweep {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(250%); }
+}
+@keyframes lb-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+/* Reduced motion: no sweep, just a soft pulse */
+@media (prefers-reduced-motion: reduce) {
+    .loading-bar__fill {
+        width: 100%;
+        animation: lb-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes lb-pulse {
+        0%, 100% { opacity: 0.4; }
+        50%      { opacity: 1; }
+    }
+}
