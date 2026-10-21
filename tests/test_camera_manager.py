@@ -10,6 +10,32 @@ def test_streaming_output_implements_buffered_io_contract():
     assert isinstance(camera_module.StreamingOutput(), io.BufferedIOBase)
 
 
+def test_streaming_output_waits_for_a_new_frame():
+    camera_module = importlib.import_module("backend.src.camera.camera_manager")
+    output = camera_module.StreamingOutput()
+    output.write(b"\xff\xd8first frame")
+    frames = output.frames()
+    first = next(frames)
+    second_result = []
+    second_frame_received = threading.Event()
+
+    def read_next_frame():
+        second_result.append(next(frames))
+        second_frame_received.set()
+
+    reader = threading.Thread(target=read_next_frame)
+    reader.start()
+    try:
+        assert not second_frame_received.wait(0.05)
+        output.write(b"\xff\xd8second frame")
+        assert second_frame_received.wait(1)
+    finally:
+        reader.join(1)
+
+    assert b"first frame" in first
+    assert b"second frame" in second_result[0]
+
+
 def test_concurrent_start_initializes_camera_once(monkeypatch):
     camera_module = importlib.import_module("backend.src.camera.camera_manager")
     initialization_entered = threading.Event()

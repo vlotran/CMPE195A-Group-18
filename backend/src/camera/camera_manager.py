@@ -27,21 +27,27 @@ class StreamingOutput(io.BufferedIOBase):
     def __init__(self) -> None:
         self.condition = Condition()
         self.frame: bytes | None = None
+        self.frame_number = 0
 
     def write(self, buf: bytes) -> int:
         # JpegEncoder writes one complete JPEG frame at a time.
         if buf.startswith(b"\xff\xd8"):
             with self.condition:
                 self.frame = buf
+                self.frame_number += 1
                 self.condition.notify_all()
         return len(buf)
 
     def frames(self):
         """Yield frames in multipart format until the client disconnects."""
+        last_frame_number = 0
         while True:
             with self.condition:
-                self.condition.wait_for(lambda: self.frame is not None)
+                self.condition.wait_for(
+                    lambda: self.frame_number > last_frame_number
+                )
                 frame = self.frame
+                last_frame_number = self.frame_number
 
             if frame is None:
                 continue
@@ -86,6 +92,7 @@ class CameraManager:
                 configuration = camera.create_video_configuration(
                     main={"size": (640, 480), "format": "RGB888"},
                     controls={"FrameRate": 15},
+                    buffer_count=2,
                 )
                 camera.configure(configuration)
                 camera.start_recording(JpegEncoder(q=80), FileOutput(output))
