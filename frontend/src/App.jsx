@@ -18,6 +18,7 @@ import AlertModal from "./components/AlertModal.jsx";
 import AlertPanel from "./components/AlertPanel.jsx"; 
 import LandingPage from "./pages/LandingPage.jsx";
 import LoadingBar from "./components/LoadingBar.jsx";
+import GlassBackground from "./components/GlassBackground.jsx"; 
 
 import useDashboardData from "./hooks/useDashboardData.js";
 
@@ -42,7 +43,7 @@ function App() {
         if (!getToken()) return;
         fetchCurrentUser()
             .then(setUser)
-            .catch(() => setUser(null))    // invalid/expired: api.js already cleared it
+            .catch(() => setUser(null)) 
             .finally(() => setChecking(false));
     }, []);
 
@@ -72,7 +73,12 @@ function App() {
     }
 
     // key: switching accounts remounts the dashboard with fresh state
-    return <AuthedApp key={user.id} user={user} onLogout={handleLogout} />;
+    return (
+        <>
+            <GlassBackground soft />
+            <AuthedApp key={user.id} user={user} onLogout={handleLogout} />
+        </>
+    );
 }
 
 /**
@@ -85,6 +91,7 @@ function AuthedApp({ user, onLogout }) {
         activeProfile, refreshProfile, 
         loading, error,
     } = useDashboardData();
+    
     // "dashboard" = show sensor cards and charts
     // "settings"  = show threshold profile management
     // "appearance" = show theme + temperature unit buttons
@@ -126,7 +133,6 @@ function AuthedApp({ user, onLogout }) {
 
     // re-read the active profile whenever the Dashboard tab is shown, so a profile
     // changed in Settings shows up on the indicator AND the card thresholds right away.
-    // (Skips the very first render; the initial load already fetched it.)
     const seenDashboard = useRef(false);
     useEffect(() => {
         if (activeTab !== "dashboard" || loading) return;
