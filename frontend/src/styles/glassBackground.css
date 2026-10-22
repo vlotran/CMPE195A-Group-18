@@ -1,0 +1,97 @@
+/* cursor light behind frosted glass (components/GlassBackground.jsx).
+   Moved here from LandingPage.css so the dashboard can use it too.
+   Colors come from theme.css: orange on dark, blue on light. */
+
+/* Smooth trailing: registering the variables lets CSS animate them */
+@property --mx { syntax: "<length-percentage>"; inherits: true; initial-value: 70vw; }
+@property --my { syntax: "<length-percentage>"; inherits: true; initial-value: 35vh; }
+
+.glass-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+
+    --mx: 70vw;                 /* starting spot (before the mouse moves) */
+    --my: 35vh;
+    transition: --mx 0.25s ease-out, --my 0.25s ease-out;
+
+    /* Light strength (tune here) */
+    --glow: 0.55;               /* light under the cursor */
+    --orb-1: 0.35;              /* top-left orb */
+    --orb-2: 0.25;              /* bottom-right orb */
+    --corner: 0.12;             /* fixed corner glow */
+}
+
+/* Dashboard: dimmer, so cards and charts stay easy to read */
+.glass-bg--soft {
+    --glow: 0.3;
+    --orb-1: 0.16;
+    --orb-2: 0.12;
+    --corner: 0.06;
+}
+
+/* 1. The light: blurred directly (works in every browser) */
+.glass-bg-light {
+    position: absolute;
+    inset: -120px;           
+    overflow: hidden;
+    filter: blur(50px);
+
+    background:
+        radial-gradient(
+            /* this layer starts 120px off-screen */
+            380px circle at calc(var(--mx) + 120px) calc(var(--my) + 120px),
+            rgba(var(--accent-rgb), var(--glow)),
+            transparent 70%
+        ),
+        radial-gradient(900px circle at 0% 0%, rgba(var(--accent-rgb), var(--corner)), transparent 70%),
+        radial-gradient(900px circle at 100% 100%, rgba(var(--accent-rgb), var(--corner)), transparent 70%);
+}
+
+/* Floating orbs: give the glass something to bend so it reads as glass */
+.glass-bg-light::before,
+.glass-bg-light::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(var(--accent-rgb), var(--orb-1));
+    animation: glassOrbDrift 18s ease-in-out infinite alternate;
+}
+.glass-bg-light::before {
+    width: 420px; height: 420px;
+    top: 0; left: 8%;
+}
+.glass-bg-light::after {
+    width: 340px; height: 340px;
+    bottom: 20px; right: 12%;
+    background: rgba(var(--accent-rgb), var(--orb-2));
+    animation-duration: 24s;
+    animation-direction: alternate-reverse;
+}
+@keyframes glassOrbDrift {
+    from { transform: translate(0, 0) scale(1); }
+    to   { transform: translate(120px, 80px) scale(1.15); }
+}
+
+/* 2. Frosted glass pane: blur + faint fill and highlight */
+.glass-bg-pane {
+    position: absolute;
+    inset: 0;
+
+    -webkit-backdrop-filter: blur(60px) saturate(160%);
+            backdrop-filter: blur(60px) saturate(160%);
+
+    background: linear-gradient(
+        160deg,
+        rgba(var(--fg-rgb), 0.05),
+        rgba(var(--fg-rgb), 0.01) 40%,
+        rgba(var(--fg-rgb), 0.03)
+    );
+}
+
+/* No drifting orbs for "reduce motion" */
+@media (prefers-reduced-motion: reduce) {
+    .glass-bg-light::before,
+    .glass-bg-light::after { animation: none; }
+}

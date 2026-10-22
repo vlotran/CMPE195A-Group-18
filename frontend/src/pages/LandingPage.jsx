@@ -1,18 +1,31 @@
 import { useState } from "react";
 
-import { loginUser, registerUser } from "../services/api.js";   // NEW: login
+import { loginUser, registerUser } from "../services/api.js"; 
 
-import logo from "../assets/logo.png";
+import logoLight from "../assets/Logo_light.png";
+import logoDark from "../assets/Logo_dark.png";
 import hydroponicBg from "../assets/hydroponic-bg.png";
+import darkModeIcon from "../assets/icons/darkmode.png";
+import lightModeIcon from "../assets/icons/lightmode.png";
+import { useTheme, DARK } from "../contexts/ThemeContext.jsx";
+import closeIcon from "../assets/icons/close.png";
+import rightArrowIcon from "../assets/icons/right-arrow.png";
 
+import GlassBackground from "../components/GlassBackground.jsx";  
+import "../styles/appearance.css";   
 import "../styles/LandingPage.css";
 
 function LandingPage({ onLogin }) {
+    // theme follows the same setting as the dashboard (saved in localStorage)
+    const { theme, toggleTheme } = useTheme();
+    const darkMode = theme === DARK;
+    const logo = darkMode ? logoDark : logoLight;
+
     const [showLogin, setShowLogin] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showCreateAccount, setShowCreateAccount] = useState(false);
 
-    // NEW (login): form feedback
+    // (login): form feedback
     const [authError, setAuthError] = useState("");     // red message in the open popup
     const [notice, setNotice] = useState("");           // green "account created" message
     const [busy, setBusy] = useState(false);            // disables the submit button while waiting
@@ -26,7 +39,7 @@ function LandingPage({ onLogin }) {
     // SIGN IN
     // =========================
 
-    // CHANGED: checks the email + password with the backend (POST /api/auth/login).
+    // checks the email + password with the backend (POST /api/auth/login).
     // Inputs are read by their `name` attribute, so the JSX below stays the same.
 
     const handleSubmit = async (e) => {
@@ -41,7 +54,7 @@ function LandingPage({ onLogin }) {
                 password: form.get("password"),
                 remember: form.get("remember") === "on",
             });
-            onLogin(user);   // App.jsx switches to the dashboard
+            onLogin(user);
         } catch (err) {
             setAuthError(err.message || "Sign in failed. Please try again.");
             setBusy(false);
@@ -52,7 +65,7 @@ function LandingPage({ onLogin }) {
     // CREATE ACCOUNT
     // =========================
 
-    // CHANGED: creates the account on the backend (POST /api/auth/register),
+    // creates the account on the backend (POST /api/auth/register),
     // then opens Sign In with the email already filled in.
     
     const handleCreateAccount = async (e) => {
@@ -87,17 +100,37 @@ function LandingPage({ onLogin }) {
     return (
         <div className="landing-page">
 
+            {/*light that follows the cursor, behind frosted glass */}
+            <GlassBackground />
+
             {/* Header */}
             <header className="landing-header">
-                <div className="landing-brand">
+                <a
+                    href="/"
+                    className="landing-logo-link"
+                    title="Refresh"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        window.location.reload();
+                    }}
+                >
                     <img
                         src={logo}
-                        alt="HydroGarden Logo"
+                        alt="Smart Hydroponic Garden System"
                         className="landing-logo"
                     />
+                </a>
 
-                    <span>HydroGarden</span>
-                </div>
+                {/*theme switch*/}
+                <button
+                    type="button"
+                    className="theme-toggle landing-theme-toggle"
+                    onClick={toggleTheme}
+                    aria-label={darkMode ? "Switch to light theme" : "Switch to dark theme"}
+                >
+                    <img src={darkMode ? darkModeIcon : lightModeIcon} alt="" />
+                    <span>{darkMode ? "Dark" : "Light"}</span>
+                </button>
             </header>
 
             {/* Hero */}
@@ -107,19 +140,18 @@ function LandingPage({ onLogin }) {
                 <div className="landing-content">
 
                     <p className="landing-eyebrow">
-                        SMART HYDROPONIC GARDEN
+                        CMPE-195B GROUP 18
                     </p>
 
                     <h1>
-                        Grow Smarter.
+                        Smart Hydroponic.
                         <br />
-
-                        <span>Grow Healthier.</span>
+                        <span>Garden System.</span>
                     </h1>
 
                     <p className="landing-description">
                         Smart monitoring for your hydroponic garden.
-                        Monitor pH, humidity, and system status in real time.
+                        Monitor water pH, air humidity, and air temperature in real time.
                     </p>
 
                     <button
@@ -127,7 +159,12 @@ function LandingPage({ onLogin }) {
                         onClick={openLogin}
                     >
                         Get Started
-                        <span>→</span>
+                        {/*right-arrow.png (mask) */}
+                        <span
+                            className="get-started-arrow"
+                            style={{ "--icon": `url(${rightArrowIcon})` }}
+                            aria-hidden="true"
+                        />
                     </button>
 
                 </div>
@@ -151,9 +188,8 @@ function LandingPage({ onLogin }) {
                 <h2>
                     Your plants. Your data. Your control.
                 </h2>
-
                 <p className="team-heading">
-                    MEET THE TEAM
+                    GROUP 18 MEMBERS
                 </p>
 
                 <div className="landing-team">
@@ -273,16 +309,21 @@ function LandingPage({ onLogin }) {
 
                         {/* Close */}
                         <button
+                            type="button"
                             className="login-close"
+                            aria-label="Close"
                             onClick={() => setShowLogin(false)}
                         >
-                            ×
+                            <span
+                                className="login-close-icon"
+                                style={{ "--icon": `url(${closeIcon})` }}
+                            />
                         </button>
 
                         {/* Logo */}
                         <img
                             src={logo}
-                            alt="HydroGarden"
+                            alt="Smart Hydroponic Garden System"
                             className="login-logo"
                         />
 
@@ -294,7 +335,7 @@ function LandingPage({ onLogin }) {
                             Sign in to your HydroGarden
                         </p>
 
-                        {/* NEW: "account created" message */}
+                        {/*"account created" message */}
                         {notice && (
                             <p className="login-notice" role="status">{notice}</p>
                         )}
@@ -364,7 +405,7 @@ function LandingPage({ onLogin }) {
 
                             </div>
 
-                            {/* NEW: error from the backend (e.g. wrong password) */}
+                            {/* error from the backend (e.g. wrong password) */}
                             {authError && (
                                 <p className="login-error" role="alert">{authError}</p>
                             )}
@@ -420,12 +461,17 @@ function LandingPage({ onLogin }) {
                         {/* CLOSE */}
 
                         <button
+                            type="button"
                             className="login-close"
+                            aria-label="Close"
                             onClick={() =>
                                 setShowCreateAccount(false)
                             }
                         >
-                            ×
+                            <span
+                                className="login-close-icon"
+                                style={{ "--icon": `url(${closeIcon})` }}
+                            />
                         </button>
 
 
@@ -433,7 +479,7 @@ function LandingPage({ onLogin }) {
 
                         <img
                             src={logo}
-                            alt="HydroGarden"
+                            alt="Smart Hydroponic Garden System"
                             className="login-logo"
                         />
 
@@ -559,7 +605,7 @@ function LandingPage({ onLogin }) {
 
                             {/* CREATE ACCOUNT */}
 
-                            {/* NEW: error from the backend (email already used) */}
+                            {/* error from the backend (email already used) */}
                             {authError && (
                                 <p className="login-error" role="alert">{authError}</p>
                             )}

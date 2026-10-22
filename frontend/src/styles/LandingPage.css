@@ -6,22 +6,22 @@
     min-height: 100vh;
     width: 100%;
 
-    color: #f5f7f5;
+    /*dashboard colors (theme.css) instead of the green palette */
+    color: var(--text);
+    background: var(--bg);
 
-    background:
-        radial-gradient(
-            circle at 75% 40%,
-            rgba(91, 227, 155, 0.08),
-            transparent 35%
-        ),
-        linear-gradient(
-            135deg,
-            #062e2a,
-            #082f2b,
-            #041f1d
-        );
+    /* background light lives in GlassBackground.jsx / glassBackground.css */
+    position: relative;
+    isolation: isolate; 
+}
 
-    overflow-x: hidden;
+
+/* Content above the background layers */
+.landing-header,
+.landing-hero,
+.landing-bottom {
+    position: relative;
+    z-index: 1;
 }
 
 
@@ -36,23 +36,38 @@
     margin: auto;
 
     padding: 28px 6%;
-}
+    box-sizing: border-box;
 
-.landing-brand {
+    /* logo on the left, theme button on the right */
     display: flex;
     align-items: center;
-
-    gap: 12px;
-
-    font-size: 22px;
-    font-weight: 700;
+    justify-content: space-between;
+    gap: 16px;
 }
 
+/* theme logo (Logo_light.png / Logo_dark.png) replaces leaf + "HydroGarden" */
 .landing-logo {
-    width: 50px;
-    height: 50px;
+    --logo-size: 140px;
+    display: block;
+    height: var(--logo-size);
+    width: auto;
+    margin: calc(var(--logo-size) * -0.25) 0;
+}
 
-    object-fit: contain;
+/* logo is a link that reloads the page */
+.landing-logo-link {
+    display: block;
+    line-height: 0;
+    border-radius: 8px;
+}
+.landing-logo-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+}
+
+/* theme button keeps the .theme-toggle look from the Appearance page */
+.landing-theme-toggle {
+    flex-shrink: 0;
 }
 
 
@@ -96,7 +111,7 @@
 .landing-eyebrow {
     margin: 0 0 22px;
 
-    color: #5be39b;
+    color: var(--accent);
 
     font-size: 16px;
     font-weight: 700;
@@ -107,7 +122,7 @@
 .landing-content h1 {
     margin: 0;
 
-    color: #f5f7f5;
+    color: var(--text);
 
     font-size: clamp(52px, 6vw, 82px);
 
@@ -119,7 +134,7 @@
 }
 
 .landing-content h1 span {
-    color: #5be39b;
+    color: var(--accent);       /* orange on dark, blue on light */
 }
 
 .landing-description {
@@ -128,7 +143,7 @@
     margin-top: 28px;
     margin-bottom: 35px;
 
-    color: #b8c9c3;
+    color: rgba(var(--fg-rgb), 0.7);
 
     font-size: 18px;
 
@@ -153,9 +168,9 @@
 
     border-radius: 12px;
 
-    background: #5be39b;
+    background: var(--accent);
 
-    color: #062e2a;
+    color: var(--on-accent);
 
     font-size: 16px;
     font-weight: 700;
@@ -166,22 +181,28 @@
 }
 
 .get-started-button:hover {
-    background: #38d97f;
+    filter: brightness(1.1);
 
     transform: translateY(-3px);
 
     box-shadow:
         0 15px 35px
-        rgba(91, 227, 155, 0.25);
+        rgba(var(--accent-rgb), 0.25);
 }
 
-.get-started-button span {
-    font-size: 20px;
+/* right-arrow.png drawn as a mask in the button's text color */
+.get-started-arrow {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background-color: currentColor;
+    -webkit-mask: var(--icon) center / contain no-repeat;
+            mask: var(--icon) center / contain no-repeat;
 
     transition: 0.3s ease;
 }
 
-.get-started-button:hover span {
+.get-started-button:hover .get-started-arrow {
     transform: translateX(5px);
 }
 
@@ -207,43 +228,49 @@
 
     width: 80%;
     height: 70%;
-
     background:
-        rgba(56, 217, 127, 0.2);
+        rgba(var(--accent-rgb), 0.35);
 
-    filter: blur(100px);
+    filter: blur(80px);
 
     border-radius: 50%;
 }
 
+/* show the whole picture, whatever its size or shape  */
 .landing-image {
     position: relative;
 
     z-index: 1;
 
-    width: 100%;
-
-    max-width: 720px;
-
-    aspect-ratio: 16 / 10;
-
-    object-fit: cover;
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 70vh;
 
     border-radius: 30px;
 
     border:
         1px solid
-        rgba(255, 255, 255, 0.08);
-
-    box-shadow:
-        0 35px 90px
-        rgba(0, 0, 0, 0.38);
-
+        rgba(var(--fg-rgb), 0.1);
+    box-shadow: var(--landing-image-shadow);
     animation:
         gardenFloat
         5s
         ease-in-out
         infinite;
+}
+
+/* Black shadows disappear on the dark background, so dark adds an accent halo */
+.landing-page {
+    --landing-image-shadow:
+        0 24px 60px -12px rgba(0, 0, 0, 0.7),
+        0 0 70px -10px rgba(var(--accent-rgb), 0.45);
+}
+[data-theme="light"] .landing-page {
+    --landing-image-shadow:
+        0 24px 60px -12px rgba(0, 0, 0, 0.25),
+        0 0 70px -10px rgba(var(--accent-rgb), 0.35);
 }
 
 
@@ -260,7 +287,7 @@
 .landing-bottom h2 {
     margin: 0 0 30px;
 
-    color: #dce8e4;
+    color: var(--text);
 
     font-size: 21px;
 
@@ -270,7 +297,7 @@
 .team-heading {
     margin-bottom: 18px;
 
-    color: #5be39b;
+    color: var(--accent);
 
     font-size: 16px;
     font-weight: 700;
@@ -308,12 +335,12 @@
 
     border:
         1px solid
-        rgba(255, 255, 255, 0.08);
+        rgba(var(--fg-rgb), 0.08);
 
     border-radius: 14px;
 
     background:
-        rgba(255, 255, 255, 0.035);
+        rgba(var(--fg-rgb), 0.035);
 
     transition: 0.3s ease;
 }
@@ -322,7 +349,7 @@
     transform: translateY(-4px);
 
     border-color:
-        rgba(91, 227, 155, 0.3);
+        rgba(var(--accent-rgb), 0.3);
 }
 
 .team-avatar {
@@ -339,9 +366,9 @@
 
     border-radius: 50%;
 
-    background: #103f38;
+    background: rgba(var(--accent-rgb), 0.15);
 
-    color: #5be39b;
+    color: var(--accent);
 
     font-weight: 700;
 }
@@ -349,14 +376,14 @@
 .landing-team-member p {
     margin: 0 0 4px;
 
-    color: white;
+    color: var(--text);
 
     font-size: 14px;
     font-weight: 600;
 }
 
 .landing-team-member span {
-    color: #8ca9a1;
+    color: rgba(var(--fg-rgb), 0.55);
 
     font-size: 12px;
 }
@@ -382,7 +409,7 @@
     justify-content: center;
 
     background:
-        rgba(0, 18, 16, 0.8);
+        rgba(0, 0, 0, 0.6);
 
     backdrop-filter: blur(9px);
 
@@ -409,14 +436,9 @@
 
     border:
         1px solid
-        rgba(91, 227, 155, 0.18);
+        rgba(var(--accent-rgb), 0.18);
 
-    background:
-        linear-gradient(
-            145deg,
-            #0b3f39,
-            #082f2b
-        );
+    background: var(--surface-alt);
 
     box-shadow:
         0 35px 100px
@@ -441,31 +463,59 @@
     border-radius: 50%;
 
     background:
-        rgba(255, 255, 255, 0.05);
+        rgba(var(--fg-rgb), 0.05);
 
-    color: #b8c9c3;
+    color: rgba(var(--fg-rgb), 0.7);
 
     font-size: 25px;
 
     cursor: pointer;
+
+    /* NEW: index.css button padding made the circle lopsided */
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
+/*icon color follows the theme
+   hover: accent tint + accent icon | pressed: solid accent + contrasting icon */
 .login-close:hover {
-    color: white;
+    color: var(--accent);
 
     background:
-        rgba(255, 255, 255, 0.1);
+        rgba(var(--accent-rgb), 0.15);
+}
+
+.login-close:active {
+    color: var(--on-accent);
+
+    background: var(--accent);
+}
+
+/* index.css rings every focused button; keep it for keyboard users only */
+.login-close:focus { outline: none; }
+.login-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/*close.png drawn as a mask, so it takes the button's color */
+.login-close-icon {
+    display: block;
+    width: 14px;
+    height: 14px;
+    background-color: currentColor;
+    -webkit-mask: var(--icon) center / contain no-repeat;
+            mask: var(--icon) center / contain no-repeat;
 }
 
 .login-logo {
     display: block;
 
-    width: 62px;
-    height: 62px;
+    /*theme logo; square file with padding, so trim it like the header */
+    height: 120px;
+    width: auto;
 
-    margin: 0 auto 15px;
-
-    object-fit: contain;
+    margin: -24px auto -12px;
 }
 
 .login-box h2 {
@@ -473,7 +523,7 @@
 
     text-align: center;
 
-    color: white;
+    color: var(--text);
 
     font-size: 28px;
 }
@@ -483,7 +533,7 @@
 
     text-align: center;
 
-    color: #b8c9c3;
+    color: rgba(var(--fg-rgb), 0.7);
 
     font-size: 14px;
 }
@@ -502,7 +552,7 @@
 .login-box form > label {
     margin-bottom: 8px;
 
-    color: #d8e5e0;
+    color: rgba(var(--fg-rgb), 0.85);
 
     font-size: 14px;
 }
@@ -511,6 +561,7 @@
 .login-box input[type="password"],
 .login-box input[type="text"] {
     width: 100%;
+    box-sizing: border-box;
 
     padding: 14px;
 
@@ -518,23 +569,23 @@
 
     border:
         1px solid
-        rgba(255, 255, 255, 0.12);
+        rgba(var(--fg-rgb), 0.12);
 
     border-radius: 10px;
 
     outline: none;
 
-    background: #062e2a;
+    background: var(--bg);
 
-    color: white;
+    color: var(--text);
 }
 
 .login-box input:focus {
-    border-color: #5be39b;
+    border-color: var(--accent);
 }
 
 .login-box input::placeholder {
-    color: #78948d;
+    color: rgba(var(--fg-rgb), 0.45);
 }
 
 
@@ -562,7 +613,7 @@
 
     background: transparent;
 
-    color: #5be39b;
+    color: var(--accent);
 
     cursor: pointer;
 }
@@ -589,13 +640,13 @@
 
     gap: 7px;
 
-    color: #b8c9c3;
+    color: rgba(var(--fg-rgb), 0.7);
 
     font-size: 12px;
 }
 
 .remember-me input {
-    accent-color: #5be39b;
+    accent-color: var(--accent);
 }
 
 .forgot-password {
@@ -603,7 +654,7 @@
 
     background: transparent;
 
-    color: #5be39b;
+    color: var(--accent);
 
     font-size: 12px;
 
@@ -624,9 +675,9 @@
 
     border-radius: 10px;
 
-    background: #5be39b;
+    background: var(--accent);
 
-    color: #062e2a;
+    color: var(--on-accent);
 
     font-size: 15px;
     font-weight: 700;
@@ -637,37 +688,37 @@
 }
 
 .login-submit:hover {
-    background: #38d97f;
+    filter: brightness(1.1);
 
     transform: translateY(-2px);
 }
 
-/* NEW (login): button while waiting for the backend */
+/* (login): button while waiting for the backend */
 .login-submit:disabled {
     opacity: 0.6;
     cursor: wait;
     transform: none;
 }
 
-/* NEW (login): wrong password, email taken, passwords don't match... */
+/*(login): wrong password, email taken, passwords don't match... */
 .login-error {
     margin: 0 0 14px;
     padding: 10px 12px;
     border-radius: 8px;
     background: rgba(255, 99, 99, 0.12);
     border: 1px solid rgba(255, 99, 99, 0.45);
-    color: #ff9b9b;
+    color: #e04040;
     font-size: 14px;
 }
 
-/* NEW (login): "Account created! Sign in to continue." */
+/* (login): "Account created! Sign in to continue." */
 .login-notice {
     margin: 0 0 16px;
     padding: 10px 12px;
     border-radius: 8px;
-    background: rgba(91, 227, 155, 0.12);
-    border: 1px solid rgba(91, 227, 155, 0.45);
-    color: #5be39b;
+    background: rgba(var(--fg-rgb), 0.04);
+    border: 1px solid var(--ok);
+    color: var(--ok);
     font-size: 14px;
 }
 
@@ -676,13 +727,13 @@
 
     text-align: center;
 
-    color: #b8c9c3;
+    color: rgba(var(--fg-rgb), 0.7);
 
     font-size: 13px;
 }
 
 .create-account span {
-    color: #5be39b;
+    color: var(--accent);
 
     font-weight: 600;
 
@@ -782,9 +833,7 @@
     }
 
     .landing-header {
-        display: flex;
-
-        justify-content: center;
+        justify-content: space-between;
     }
 }
 
@@ -793,6 +842,10 @@
 
     .landing-header {
         padding: 20px;
+    }
+
+    .landing-logo {
+        --logo-size: 100px;
     }
 
     .landing-hero {
@@ -844,7 +897,7 @@
 
     background: transparent;
 
-    color: #5be39b;
+    color: var(--accent);
 
     font-size: 13px;
     font-weight: 600;
@@ -855,7 +908,7 @@
 }
 
 .create-account-link:hover {
-    color: #38d97f;
+    color: var(--accent);
 
     text-decoration: underline;
 }
@@ -884,7 +937,7 @@
     margin-top: 2px;
     margin-bottom: 22px;
 
-    color: #b8c9c3;
+    color: rgba(var(--fg-rgb), 0.7);
 
     font-size: 12px;
 
@@ -897,7 +950,7 @@
 
     margin: 0;
 
-    accent-color: #5be39b;
+    accent-color: var(--accent);
 }
 
 
@@ -912,7 +965,7 @@
 }
 
 .create-account-box::-webkit-scrollbar-thumb {
-    background: rgba(91, 227, 155, 0.35);
+    background: rgba(var(--accent-rgb), 0.35);
 
     border-radius: 10px;
 }
@@ -933,7 +986,7 @@
 .team-name {
     margin: 0;
 
-    color: #f5f7f5;
+    color: var(--text);
 
     font-size: 14px;
     font-weight: 600;
@@ -948,7 +1001,7 @@
 
 .team-links a,
 .team-links span {
-    color: #8ca9a1;
+    color: rgba(var(--fg-rgb), 0.55);
 
     font-size: 11px;
 
@@ -958,5 +1011,5 @@
 }
 
 .team-links a:hover {
-    color: #5be39b;
+    color: var(--accent);
 }
