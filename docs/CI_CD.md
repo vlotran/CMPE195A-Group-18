@@ -3,13 +3,13 @@
 ```
  push / pull request ─>  CI (GitHub's servers)              ─>   Deploy (runs ON the Pi)
                           ├─ Backend:  pytest (Python 3.11)        only for main, only if CI passed
-                          └─ Frontend: ESLint + vite build          pull → back up DB → restart → health check
+                          └─ Frontend: ESLint + vite build          pull -> back up DB -> restart -> health check
                                                                     └─ unhealthy? automatic rollback
 ```
 
 ## Files and what they do
 - `.github/workflows/ci.yml`: **CI**: tests + lint + build on every push and every PR into `main` 
-- `.github/workflows/deploy.yml`:**CD**: deploys the backend to the Pi after CI passes on `main` (off until the Pi is set up) 
+- `.github/workflows/deploy.yml`:**CD**: deploys the backend to the Pi after CI passes on `main` 
 - `deploy/deploy.sh`: The deploy itself. The workflow calls it; you can also run it by hand on the Pi 
 - `deploy/hydroponic.service`: systemd service that runs the backend on the Pi 
 - `.github/actionlint.yaml`: Tells the workflow linter about the `hydro-pi` runner label 
@@ -26,12 +26,9 @@ Every push to any branch and every pull request into `main` runs two jobs:
 
 **Run the same checks locally before pushing:**
 ```bash
-python -m pytest tests                        # repo root
+python -m pytest tests                        # at repo root
 cd frontend && npm run lint && npm run build
 ```
-
-**Recommended: protect `main`.** Settings → Branches → Add rule for `main` → *Require status checks to pass before merging* → select **Backend tests (pytest)** and **Frontend lint + build**. Then nothing broken can be merged into `main`, so nothing broken gets deployed.
-
 ---
 
 ## CD: deploy to the Pi (one-time setup by the hardware team)
@@ -127,7 +124,7 @@ sudo systemctl start hydroponic
 
 - `git fetch failed`: The Pi can't pull without a password. Set up an SSH key or a saved token 
 
-- `sudo: a password is required` | Step 2 (sudoers) is missing or has the wrong user/path. Check `which systemctl`
+- `sudo: a password is required`- Step 2 (sudoers) is missing or has the wrong user/path. Check `which systemctl`
 
 - `rolled back`: The new code didn't start. On the Pi: `sudo journalctl -u hydroponic -n 80` shows why
 
