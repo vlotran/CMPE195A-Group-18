@@ -64,10 +64,66 @@ Small hydroponic growers have to check pH, temperature and humidity by hand, and
 **Accounts:** none needed to run locally. Public access to the Pi uses an ngrok account (held by the team).
 
 ## Installation
-Numbered steps from a clean machine. Document environment variables without their values.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/vlotran/CMPE195A-Group-18.git
+   cd CMPE195A-Group-18
+   ```
+2. Install backend dependencies (from the repo root):
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Create the backend config. On a machine without sensors, set `USE_MOCK_SENSORS=True` in it:
+   ```bash
+   cp .env.example .env
+   ```
+4. Install frontend dependencies and create its config:
+   ```bash
+   cd frontend
+   npm install
+   cp .env.example .env
+   cd ..
+   ```
+5. **Raspberry Pi only:** install the hardware libraries into the same Python that runs the backend, and set `USE_MOCK_SENSORS=False` in `.env`:
+   ```bash
+   pip install adafruit-blinka adafruit-circuitpython-bme280 adafruit-circuitpython-bme680 smbus2
+   sudo apt install -y python3-picamera2 
+
+### Environment variables
+`.env` files are gitignored. The `.env.example` files list every variable; no secrets are needed.
+
+**Backend** (`.env` in the repo root):
+-
+- `APP_NAME`: API title
+- `CONTROLLER_NAME`: Device name shown in the navbar (defaults to the hostname)
+- `DEBUG`: Auto-reload and debug output
+- `LOG_LEVEL`: Log detail (`INFO`, `DEBUG`, ...) 
+- `API_HOST`, `API_PORT`: Address the API listens on
+- `DATABASE_PATH`: SQLite file, relative to the repo root 
+- `USE_MOCK_SENSORS`: `True` = simulated sensors, `False` = real I2C sensors 
+- `SENSOR_READ_INTERVAL`: Seconds between sensor reads 
+- `ALLOWED_ORIGINS`: Frontend URLs allowed to call the API (comma-separated, or `*`) 
+
+**Frontend** (`frontend/.env`):
+- `VITE_API_BASE_URL`: Backend URL: the local backend (for Mock sensor data) or the Pi's ngrok URL (for live sensor data)
 
 ## Running the Prototype
-The exact commands to start the system.
+Start the backend **from the repo root** (the database path is relative to it):
+```bash
+python -m backend.src.main
+```
+In a second terminal, start the frontend:
+```bash
+cd frontend
+npm run dev
+```
+Open `http://localhost:5173`, click **Get Started -> Create account**, then sign in.
+
+- **Without hardware:** `USE_MOCK_SENSORS=True` and `VITE_API_BASE_URL=http://localhost:8000`. The camera widget shows "unavailable".
+- **With the Pi:** the backend runs on the Pi as the `hydroponic` systemd service (`sudo systemctl status hydroponic`). Point `VITE_API_BASE_URL` at the Pi's ngrok URL and create an account there (accounts are stored per database).
+- **API docs:** `http://localhost:8000/docs`
+
+After changing `frontend/.env`, restart `npm run dev`.
 
 ## Testing
 
