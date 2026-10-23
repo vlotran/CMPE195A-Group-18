@@ -44,8 +44,8 @@ notes: >-
   temperature range to 90-95 C and save. Within about 75 s a temperature Danger popup
   appears without refreshing (refresh to see the card turn red); a second account with
   the default profile gets no alert.
-  Live readings: BME280 and BME680 on the Pi; the pH sensor still uses simulated data.
-  The live camera needs the Pi camera (Picamera2) and shows "unavailable" in mock mode. (change later)
+  Live readings: BME280 and BME680 on the Pi; the pH sensor still uses simulated data. (change later)
+  The live camera needs the Arducam V3 camera and shows "unavailable" in mock mode. 
   The 4 relay-controlled outlets (light, humidifier, exhaust fan, water pump) are planned
   and not implemented in software yet. The system is open loop: it never switches
   anything on its own.
