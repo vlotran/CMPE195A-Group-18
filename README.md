@@ -30,8 +30,7 @@ Small hydroponic growers have to check pH, temperature and humidity manually and
 - Password reset ("Forgot password?") is not implemented
 ...
 ## System Architecture
-... insert diagram
-
+![ProtoypeDiagram](ProtoypeDiagram.png)
 - **Sensors:** BME280 (temperature, humidity, pressure), BME680 (temperature, humidity, pressure, air quality), Atlas Scientific EZO-pH on I2C.
 - **Data collector:** a background task in the backend reads every sensor, stores the reading, and evaluates it against every user's active profile. If a sensor's hardware is missing, that sensor falls back to mock data on its own.
 - **API:** FastAPI. Sensor data is public; profiles and alerts need a login token (`Authorization: Bearer <token>`).
