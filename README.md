@@ -6,25 +6,27 @@
 - Thai Nguyen (GitHub: @thaiHnguyen)
 
 ## Project Description
-Small hydroponic growers have to check pH, temperature and humidity manually and problems often go unnoticed until plants are damaged. Our system uses a Raspberry Pi 5 with I2C sensors to read the garden data in real time, stores the readings, and shows them on a web dashboard that helps each user monitor their plant conditions. It is an **open-loop** system: senses, stores, displays and alerts, then user can takes action.
+Small hydroponic growers have to check pH, temperature and humidity by hand, and problems often go unnoticed until plants are damaged. Our system uses a Raspberry Pi 5 with live camera and I2C sensors to read the garden data every 30 seconds, stores the readings, and shows them on a browser dashboard. It is an open-loop system: it senses, stores, displays and alerts so that the user can decide what to do. 
 
 ## Prototype Scope
 **Works end to end now:**
-- Sensors -> Raspberry Pi -> FastAPI -> SQLite -> React dashboard, refreshing every 5 seconds
+- Sensors -> Raspberry Pi -> FastAPI -> SQLite -> React dashboard
 
-- Five metrics: temperature, humidity, pH, air pressure, air quality score, each with a card and a 24-hour chart
+- Four metrics on the dashboard air temperature, air humidity, air quality score and water pH (each with a sensor data widget and a 24-hour chart)
+
+- Live camera view of the plants on the dashboard (Arducam V3 camera)
 
 - User accounts: create account, sign in with 6-hour session, log out
 
-- Per-user threshold profiles: every account starts with 10 example profiles (Lettuce, Tomato, Basil) and can add, edit, delete and activate its own
+- Per-user threshold profiles: every account starts with 10 example profiles (Lettuce, Tomato, Basil) and user can add, edit, delete and activate them on their own
 
-- Per-user alerts: each reading is checked against each user's active profile; Warning/Danger states on the cards and a popup for Danger
+- Alerts: each reading is checked against each user's active profile; Warning/Danger states on the cards, a popup for Danger, and an alert history panel with an unread badge and "Mark all as read"
 
 - Appearance settings: light/dark theme, °C/°F
 
 - Mock sensor mode: the whole system runs on a laptop without hardware
 
-- CI on every push (GitHub Actions): backend tests, frontend lint and build
+- CI on every push (GitHub Actions): tests, lint and build on every push; every green commit on main is deployed to the Pi automatically, with a database backup and automatic rollback if the backend doesn't come back healthy
 
 **Incomplete:**
 - Password reset ("Forgot password?") is not implemented
