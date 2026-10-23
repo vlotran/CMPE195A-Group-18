@@ -5,7 +5,7 @@ Loads configuration from environment variables
 import socket
 from pathlib import Path
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 
 # Repo root = backend/src/config/settings.py -> up 3 levels.
@@ -48,10 +48,12 @@ class Settings(BaseSettings):
             return ["*"]
         return [origin.strip() for origin in self.allowed_origins.split(",")]
 
-    class Config:
-        env_file = ENV_FILE
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    # Pydantic settings config
+    model_config = SettingsConfigDict(
+        env_file=ENV_FILE,
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
 
 
 # Global settings instance
