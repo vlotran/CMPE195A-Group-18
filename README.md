@@ -30,9 +30,11 @@ Small hydroponic growers have to check pH, temperature and humidity by hand, and
 
 **Incomplete:**
 - Password reset ("Forgot password?") is not implemented
+- The frontend runs locally and reaches the Pi through ngrok; it is not hosted at a public URL yet.
 ...
+
 ## System Architecture
-![ProtoypeDiagram](ProtoypeDiagram.png)
+![ProtoypeDiagram](docs/system-architecture/ProtoypeDiagram.png)
 - **Sensors:** 
     + BME280: Air temperature (C), air humidity (%)
     + BME680: Air temperature (C), air humidity (%), air quality
@@ -47,7 +49,7 @@ Small hydroponic growers have to check pH, temperature and humidity by hand, and
 - **Outlets (planned, dashed in the diagram):** a 4-channel relay board on the Pi's GPIO switches four outlets: light, humidifier, exhaust fan and water pump. The user will turn each one on or off with a dashboard button; the request goes through the same login-protected API.
 - **Open loop:** the system senses, stores, displays and alerts, but never acts by itself. Readings never trigger an outlet automatically: user reads the dashboard and decides whether to switch something.
 - **Deployment Pipeline**:
-![DeploymentPipeline](DeploymentPipeline.png)
+![DeploymentPipeline](docs/system-architecture/DeploymentPipeline.png)
 
 ## Prerequisites
 - Python: Version 3.11+
@@ -68,7 +70,20 @@ Numbered steps from a clean machine. Document environment variables without thei
 The exact commands to start the system.
 
 ## Testing
-How to run your tests, and what they cover.
+
+```bash
+python -m pytest tests -v                       # backend, from the repo root
+cd frontend && npm run lint && npm run build    # frontend checks
+```
+49 backend tests, no hardware needed:
+
+- `tests/test_alert_evaluator.py`:  24 tests - Normal / Warning / Danger bands for every metric, hysteresis, recovery 
+- `tests/test_auth.py`: 15 tests -  Register, login, wrong password, logout, expired sessions; users can't see or change each other's profiles or alerts; per-user alerts 
+- `tests/test_sensor_factory.py`: 7 tests - Real/mock selection per sensor data and fallback to mock when hardware is missing 
+- `tests/test_camera_manager.py`: 3 tests - Stream output waits for a fresh frame; concurrent starts open the camera only once 
+
+GitHub Actions runs all of these on every push and pull request (`.github/workflows/ci.yml`). 
+A green run on `main` triggers the deploy to the Pi (`.github/workflows/deploy.yml`). Details: [docs/CI_CD.md](docs/CI_CD.md).
 
 ## Demo
 Your demo video link, plus screenshots or logs.
@@ -79,10 +94,10 @@ Your demo video link, plus screenshots or logs.
 - **Backend:** FastAPI, Uvicorn, Pydantic v2, pydantic-settings, asyncio, Loguru
 - **Database:** SQLite via aiosqlite
 - **Auth:** scrypt password hashing and session tokens (Python standard library)
-- **Hardware:** Raspberry Pi 5; BME280, BME680, Atlas Scientific EZO-pH
-- **Hardware libraries:** Adafruit CircuitPython (BME280/BME680), smbus2 (EZO-pH)
+- **Hardware:** Raspberry Pi 5; BME280, BME680, Atlas Scientific EZO-pH; Arducam V3 camera
+- **Hardware libraries:** Adafruit CircuitPython (BME280/BME680), smbus2 (EZO-pH), Picamera2 (camera)
 - **Networking:** ngrok
-- **Testing / CI:** pytest, ESLint, GitHub Actions
+- **Testing / CI/CD:** pytest, ESLint, GitHub Actions, self-hosted runner + systemd on the Pi
 
 ## What's Next
 What you will finish before the Project Expo on December 11.
