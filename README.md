@@ -165,3 +165,4 @@ Your demo video link, plus screenshots or logs.
 - Refine alert feature and push notifications when a reading reaches Warning or Danger
 - Email service integration 
 - Password Reset via email
+- Wire the correct font to Frontend
