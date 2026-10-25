@@ -31,6 +31,8 @@ Small hydroponic growers have to check pH, temperature and humidity by hand, and
 **Incomplete:**
 - Password reset ("Forgot password?") is not implemented
 - The frontend runs locally and reaches the Pi through ngrok; it is not hosted at a public URL yet.
+- The pH sensor still runs on simulated data on the Pi; BME280 and BME680 readings are live (remove if it is integrated before submititng)
+- Password reset ("Forgot password?") is not implemented
 ...
 
 ## System Architecture
@@ -156,4 +158,10 @@ Your demo video link, plus screenshots or logs.
 - **Testing / CI/CD:** pytest, ESLint, GitHub Actions, self-hosted runner + systemd on the Pi
 
 ## What's Next
-What you will finish before the Project Expo on December 11.
+- Delete/Clear Alerts features for the AlertPanels in DashBoard
+- Deploy and Host the frontend at a public URL
+- Outlet control: backend endpoints for the 4 relays and on/off buttons on the dashboard (light, humidifier, fan, water pump)
+- Connect and calibrate the pH sensor so all four metrics are live? (remove if pH sensor is integrated before submitting this)
+- Refine alert feature and push notifications when a reading reaches Warning or Danger
+- Email service integration 
+- Password Reset via email
