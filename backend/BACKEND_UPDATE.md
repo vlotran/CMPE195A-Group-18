@@ -38,7 +38,7 @@ Users now **sign in** before seeing the dashboard. Each account has its **own th
 
 ## Environmental actuator control
 
-Automatic temperature and humidity control uses on/off hysteresis, not PID.
+Automatic temperature and humidity control uses on/off hysteresis
 When enabled by a signed-in user, it reads that user's active profile:
 
 - The fan turns on above `temp_max` and stays on until temperature reaches
@@ -55,10 +55,6 @@ When enabled by a signed-in user, it reads that user's active profile:
 The data collector evaluates control with its regular sensor-read cycle, which
 defaults to 30 seconds. Automatic mode is not restored after backend restart;
 it starts disabled. A manual fan or humidifier command disables automatic mode.
-Current relay map:
-GPIO16 SSR CH1 = fan; GPIO12 SSR CH2 = humidifier; GPIO21 mechanical IN1 =
-grow light (manual only); GPIO20 mechanical IN2 = unused. Verify relay and load
-behavior before enabling automatic control on the Pi.
 
 The authenticated actuator API/UI provides shared manual fan, humidifier, and
 grow-light controls plus a daily grow-light schedule in the Pi's local time.
