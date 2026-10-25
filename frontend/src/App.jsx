@@ -21,6 +21,7 @@ import LoadingBar from "./components/LoadingBar.jsx";
 import GlassBackground from "./components/GlassBackground.jsx"; 
 
 import useDashboardData from "./hooks/useDashboardData.js";
+import useActuators from "./hooks/useActuators.js";
 
 /**
  * App is now the sign-in gate.
@@ -91,6 +92,14 @@ function AuthedApp({ user, onLogout }) {
         activeProfile, refreshProfile, 
         loading, error,
     } = useDashboardData();
+    const {
+        state: actuatorState,
+        error: actuatorError,
+        busy: actuatorBusy,
+        setOutput: setActuatorOutput,
+        updateLightSchedule,
+        setAutomatic: setAutomaticControl,
+    } = useActuators();
     
     // "dashboard" = show sensor cards and charts
     // "settings"  = show threshold profile management
@@ -239,6 +248,12 @@ function AuthedApp({ user, onLogout }) {
                     onManageProfiles={() => setActiveTab("settings")} 
                     alertCount={alertCount} 
                     onOpenAlerts={() => setAlertsOpen(true)}  
+                    actuatorState={actuatorState}
+                    actuatorError={actuatorError}
+                    actuatorBusy={actuatorBusy}
+                    onSetActuator={setActuatorOutput}
+                    onSaveLightSchedule={updateLightSchedule}
+                    onSetAutomatic={setAutomaticControl}
                 />
             ) : activeTab === "appearance" ? (
                 appearancePage

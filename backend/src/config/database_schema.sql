@@ -169,6 +169,20 @@ CREATE TABLE IF NOT EXISTS settings (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Shared physical Pi actuator state. GPIO outputs are fail-off on startup.
+CREATE TABLE IF NOT EXISTS actuator_state (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    fan_on BOOLEAN NOT NULL DEFAULT 0,
+    humidifier_on BOOLEAN NOT NULL DEFAULT 0,
+    grow_light_on BOOLEAN NOT NULL DEFAULT 0,
+    light_schedule_enabled BOOLEAN NOT NULL DEFAULT 0,
+    light_start TEXT,
+    light_end TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT OR IGNORE INTO actuator_state (id) VALUES (1);
+
 
 -- DEFAULT CONFIGURATIONS (templates)
 -- CHANGED (login): these rows have user_id NULL, so they are templates.

@@ -36,6 +36,47 @@ Users now **sign in** before seeing the dashboard. Each account has its **own th
 
 ---
 
+## Environmental actuator control
+
+Automatic temperature and humidity control uses on/off hysteresis, not PID.
+When enabled by a signed-in user, it reads that user's active profile:
+
+- The fan turns on above `temp_max` and stays on until temperature reaches
+  `temp_min`.
+- The humidifier turns on below `humidity_min` and stays on until humidity
+  reaches `humidity_max`.
+- Between each profile's minimum and maximum, the current relay state is
+  preserved. This hysteresis band avoids rapid toggling as readings drift.
+- Each relay has a 30-second minimum interval between normal automatic state
+  changes. Missing or invalid readings turn both outputs off immediately.
+- Both real BME280 and BME680 temperature/humidity readings are required and
+  averaged. Automatic control is rejected when mock sensors are configured.
+
+The data collector evaluates control with its regular sensor-read cycle, which
+defaults to 30 seconds. Automatic mode is not restored after backend restart;
+it starts disabled. A manual fan or humidifier command disables automatic mode.
+Current relay map:
+GPIO16 SSR CH1 = fan; GPIO12 SSR CH2 = humidifier; GPIO21 mechanical IN1 =
+grow light (manual only); GPIO20 mechanical IN2 = unused. Verify relay and load
+behavior before enabling automatic control on the Pi.
+
+The authenticated actuator API/UI provides shared manual fan, humidifier, and
+grow-light controls plus a daily grow-light schedule in the Pi's local time.
+Any signed-in user can issue commands; the latest command controls this one
+physical Pi. The schedule is disabled by default; start/end times can be saved
+while it remains disabled, and overnight intervals are supported. Manual GPIO
+and schedule outputs are gated by `ACTUATOR_HARDWARE_ENABLED`, which defaults
+to `False`. To enable on the Pi, install requirements in the backend's active
+Python environment, ensure gpiozero has a supported GPIO pin-factory backend,
+then set `ACTUATOR_HARDWARE_ENABLED=True` in the Pi's repo-root `.env` and
+restart the backend. Verify relay wiring and loads first. Outputs initialize
+OFF at startup, and saved schedules are disabled if GPIO is disabled.
+Automatic control uses fixed on/off profile bands and a 30-second minimum
+switch interval. Verify relay and load compatibility before enabling it on
+the Pi.
+
+---
+
 ## Update the Pi (hardware update for Vy)
 
 Run these **from the repo root**.
