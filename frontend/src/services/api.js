@@ -169,6 +169,31 @@ export async function fetchSensorStatus() {
     return fetchJSON("/api/sensors/status");
 }
 
+// ACTUATORS (shared physical Raspberry Pi)
+export async function fetchActuatorState() {
+    return fetchJSON("/api/actuators/");
+}
+
+export async function setActuatorState(actuator, on) {
+    return fetchJSON(`/api/actuators/${actuator}/state`, {
+        method: "POST",
+        body: JSON.stringify({ on }),
+    });
+}
+
+export async function saveLightSchedule(schedule) {
+    return fetchJSON("/api/actuators/light-schedule", {
+        method: "PUT",
+        body: JSON.stringify(schedule),
+    });
+}
+
+export async function setAutomaticControl(enabled) {
+    return fetchJSON(`/api/actuators/automatic?enabled=${enabled}`, {
+        method: "POST",
+    });
+}
+
 // CAMERA
 export async function fetchCameraStatus() {
     return fetchJSON("/api/camera/status");

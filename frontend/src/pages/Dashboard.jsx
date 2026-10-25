@@ -12,12 +12,27 @@ import SensorChart from "../components/SensorChart.jsx";
 import ProfileIndicator from "../components/ProfileIndicator.jsx";
 import CameraWidget from "../components/CameraWidget.jsx";
 import AlertsButton from "../components/AlertsButton.jsx";   // NEW
+import ActuatorControls from "../components/ActuatorControls.jsx";
 import "../styles/dashboardEnter.css";   // NEW: fade-in / slide-up when the dashboard appears
 
 // NEW props: profile (active threshold profile), onManageProfiles (opens Settings)
 // NEW props: alertCount (unread warning/danger), onOpenAlerts (opens alert history)
 
-function Dashboard({ current, thresholds, charts, profile, onManageProfiles, alertCount, onOpenAlerts }) {
+function Dashboard({
+    current,
+    thresholds,
+    charts,
+    profile,
+    onManageProfiles,
+    alertCount,
+    onOpenAlerts,
+    actuatorState,
+    actuatorError,
+    actuatorBusy,
+    onSetActuator,
+    onSaveLightSchedule,
+    onSetAutomatic,
+}) {
 
     //"dashboard-enter" = fade-in / slide-up entrance (styles/dashboardEnter.css)
     return (
@@ -28,7 +43,17 @@ function Dashboard({ current, thresholds, charts, profile, onManageProfiles, ale
                 {onOpenAlerts && <AlertsButton count={alertCount} onClick={onOpenAlerts} />}
             </div>
 
-            <CameraWidget />
+            <section className="camera-actuator-layout" aria-label="Camera and actuator controls">
+                <CameraWidget />
+                <ActuatorControls
+                    state={actuatorState}
+                    error={actuatorError}
+                    busy={actuatorBusy}
+                    onSetOutput={onSetActuator}
+                    onSaveSchedule={onSaveLightSchedule}
+                    onSetAutomatic={onSetAutomatic}
+                />
+            </section>
 
             {/* Sensor Cards */}
             <section className="card-grid">

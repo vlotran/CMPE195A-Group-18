@@ -13,8 +13,9 @@ from backend.src.services.data_collector import data_collector
 from backend.src.utils.logger import logger
 
 # Import routes
-from backend.src.api.routes import camera, health, sensors, configurations, alerts, auth
+from backend.src.api.routes import camera, health, sensors, configurations, alerts, auth, actuators
 from backend.src.camera import camera_manager
+from backend.src.services.actuator_manager import actuator_manager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,6 +31,13 @@ async def lifespan(app: FastAPI):
         logger.success("Database initialized")
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
+        raise
+
+    try:
+        await actuator_manager.start()
+        logger.success("Actuator manager started")
+    except Exception as e:
+        logger.error(f"Actuator manager failed to start: {e}")
         raise
 
     # Start background data collection
@@ -52,6 +60,7 @@ async def lifespan(app: FastAPI):
 
     # Stop background data collection
     await data_collector.stop()
+    await actuator_manager.stop()
     camera_manager.stop()
 
     logger.info("Goodbye!")
@@ -85,6 +94,7 @@ app.include_router(alerts.router)
 
 app.include_router(auth.router)
 app.include_router(camera.router)
+app.include_router(actuators.router)
 
 
 @app.get("/")

@@ -6,7 +6,7 @@ import socket
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List
+from typing import List, Optional
 
 # Repo root = backend/src/config/settings.py -> up 3 levels.
 # Loading .env by absolute path fixes the bug where settings silently fell back
@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     # Sensors
     use_mock_sensors: bool = False
     sensor_read_interval: int = 30  # seconds
+
+    # Actuator observation is opt-in per user profile. GPIO remains disabled
+    # until explicitly enabled on the Raspberry Pi's repo-root .env.
+    actuator_profile_user_id: Optional[int] = None
+    actuator_hardware_enabled: bool = False
 
     # Controller identity 
     # Name shown in the frontend navbar. Override with CONTROLLER_NAME in .env;
