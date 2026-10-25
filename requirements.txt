@@ -24,6 +24,10 @@ httpx==0.28.1
 # Hardware Dependencies (Raspberry Pi Only)
 # GPIO and I2C communication
 
+# Install gpiozero into the backend's active Python environment to use the
+# authenticated manual actuator controls. Also install a supported Pi GPIO
+# pin-factory backend for the specific Raspberry Pi OS/model.
+gpiozero==2.0.1
 # lgpio==0.2.2.0
 # RPi.GPIO==0.7.1  # Alternative GPIO library (if needed)
 # smbus2==0.4.3

@@ -79,6 +79,50 @@ class DatabaseManager:
             logger.error(f" Database initialization failed: {e}")
             raise
 
+    async def get_actuator_state(self) -> Dict[str, Any]:
+        """Get shared actuator state for this single-Pi installation."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute("SELECT * FROM actuator_state WHERE id = 1")
+            row = await cursor.fetchone()
+            if row is None:
+                raise RuntimeError("Actuator state row is missing from the database")
+            state = dict(row)
+            for key in (
+                "fan_on",
+                "humidifier_on",
+                "grow_light_on",
+                "light_schedule_enabled",
+            ):
+                state[key] = bool(state[key])
+            return state
+
+    async def update_actuator_state(self, updates: Dict[str, Any]) -> None:
+        """Update explicitly allowed shared actuator-state fields."""
+        allowed = {
+            "fan_on",
+            "humidifier_on",
+            "grow_light_on",
+            "light_schedule_enabled",
+            "light_start",
+            "light_end",
+        }
+        if not updates or not updates.keys() <= allowed:
+            raise ValueError("Invalid or empty actuator-state update")
+
+        fields = ", ".join(f"{field} = ?" for field in updates)
+        values = [
+            int(value) if isinstance(value, bool) else value
+            for value in updates.values()
+        ]
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                f"UPDATE actuator_state SET {fields}, "
+                "updated_at = CURRENT_TIMESTAMP WHERE id = 1",
+                values,
+            )
+            await db.commit()
+
     async def _add_missing_columns(self, db):
         """
         NEW: add any ADDED_COLUMNS the existing tables don't have yet.

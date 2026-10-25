@@ -13,6 +13,8 @@ from backend.src.storage import db_manager
 from backend.src.config.settings import settings
 from backend.src.utils.logger import logger
 from backend.src.services.alert_evaluator import AlertEvaluator, AlertState, METRIC_BOUNDS
+from backend.src.services.actuator_controller import observe_environment
+from backend.src.services.actuator_manager import actuator_manager
 
 
 # Evaluator state -> DB severity. CHANGED: the DB now uses the same names as the
@@ -87,6 +89,8 @@ class DataCollector:
         # {user_id: active profile}, avoids a DB read every cycle. None = reload
         self._config_cache: Optional[dict] = None
         self._warned_no_config = False # log the no-users case once
+        self._warned_no_actuator_profile = False
+        self._warned_invalid_actuator_readings = False
         
     async def start(self):
         """Start background data collection"""
@@ -174,6 +178,8 @@ class DataCollector:
             self.read_count += stored_count
 
             await self._evaluate_alerts(readings) 
+            await self._observe_actuator_control(readings)
+            await actuator_manager.evaluate_automatic(readings)
 
             if stored_count > 0:
                 logger.debug(
@@ -191,6 +197,15 @@ class DataCollector:
             "total_alerts": self.alert_count,
             "using_mock": settings.use_mock_sensors,
             "interval_seconds": settings.sensor_read_interval,
+            "actuator_control": {
+                "mode": (
+                    "observation_only"
+                    if settings.actuator_profile_user_id is not None
+                    else "disabled"
+                ),
+                "profile_user_id": settings.actuator_profile_user_id,
+                "gpio_enabled": False,
+            },
         }
 
     def invalidate_config(self, user_id: Optional[int] = None):
@@ -203,6 +218,7 @@ class DataCollector:
         """
         self._config_cache = None
         self._warned_no_config = False
+        self._warned_no_actuator_profile = False
         if user_id is not None:
             evaluator = self.evaluators.get(user_id)
             if evaluator:
@@ -223,6 +239,44 @@ class DataCollector:
                 if uid not in self._config_cache:
                     del self.evaluators[uid]
         return self._config_cache
+
+    async def _observe_actuator_control(self, readings: dict):
+        """Log sensor averages and targets only; this path never controls GPIO."""
+        user_id = settings.actuator_profile_user_id
+        if user_id is None:
+            return
+
+        config = (await self._get_configs()).get(user_id)
+        if config is None:
+            if not self._warned_no_actuator_profile:
+                logger.warning(
+                    "Actuator observation disabled: no active profile for "
+                    f"configured user {user_id}"
+                )
+                self._warned_no_actuator_profile = True
+            return
+
+        observation = observe_environment(readings, vars(config))
+        if observation is None:
+            if not self._warned_invalid_actuator_readings:
+                logger.warning(
+                    "Actuator observation skipped: valid BME280 and BME680 "
+                    "temperature and humidity readings are required"
+                )
+                self._warned_invalid_actuator_readings = True
+            return
+
+        self._warned_no_actuator_profile = False
+        self._warned_invalid_actuator_readings = False
+        logger.info(
+            "Actuator observation only (GPIO disabled): "
+            f"user={user_id}, temperature={observation.temperature_c:.2f}°C "
+            f"(range {observation.temperature_min_c:.2f}-"
+            f"{observation.temperature_max_c:.2f}°C), "
+            f"humidity={observation.humidity_pct:.2f}% "
+            f"(range {observation.humidity_min_pct:.2f}-"
+            f"{observation.humidity_max_pct:.2f}%)"
+        )
 
     async def _evaluate_alerts(self, readings: dict):
         """
