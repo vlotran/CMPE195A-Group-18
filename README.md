@@ -142,7 +142,10 @@ cd frontend && npm run lint && npm run build    # frontend checks
 - `tests/test_auth.py`: 15 tests -  Register, login, wrong password, logout, expired sessions; users can't see or change each other's profiles or alerts; per-user alerts 
 - `tests/test_sensor_factory.py`: 7 tests - Real/mock selection per sensor data and fallback to mock when hardware is missing 
 - `tests/test_camera_manager.py`: 3 tests - Stream output waits for a fresh frame; concurrent starts open the camera only once 
-- `tests/test_actuator_controller.py`, `tests/test_actuator_observation.py`, and `tests/test_actuators.py`: profile-band hysteresis, sensor observation, API behavior, relay mapping, manual output and grow-light schedule tests (mock GPIO; no physical relays required)
+- `tests/test_actuator_controller.py`, `tests/test_actuator_observation.py`, and `tests/test_actuators.py`: 
+   + profile-band hysteresis
+   + sensor observation, API behavior
+   + relay mapping, manual output and grow-light schedule tests (mock GPIO; no physical relays required)
 
 GitHub Actions runs all of these on every push and pull request (`.github/workflows/ci.yml`). 
 A green run on `main` triggers the deploy to the Pi (`.github/workflows/deploy.yml`). Details: [docs/CI_CD.md](docs/CI_CD.md).
