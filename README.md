@@ -1,9 +1,9 @@
 # SMART HYDROPONIC GARDEN SYSTEM
 
 ## Team
-- Hoa Tuong Minh Nguyen (GitHub: @MinhHoaNguyen)
-- Vy Lo Phuong Tran (GitHub: @vlotran)
-- Thai Nguyen (GitHub: @thaiHnguyen)
+- Hoa Tuong Minh Nguyen ([@MinhHoaNguyen](https://github.com/MinhHoaNguyen))
+- Vy Lo Phuong Tran ([@vlotran](https://github.com/vlotran))
+- Thai Nguyen ([@thaiHnguyen](https://github.com/thaiHnguyen))
 
 ## Project Description
 Small hydroponic growers have to check pH, temperature and humidity by hand, and problems often go unnoticed until plants are damaged. Our system uses a Raspberry Pi 5 with a live camera and sensors to read garden data every 30 seconds, stores the readings, and shows them on a browser dashboard. It evaluates readings against each signed-in user's active profile and shows alerts. Users can manually control the fan, humidifier and grow light, schedule the grow light, or enable profile-based on/off temperature and humidity control.
