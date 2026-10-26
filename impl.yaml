@@ -37,7 +37,7 @@ mock_mode:
     - "cd frontend && VITE_API_BASE_URL=http://localhost:8000 npm run dev"
 
 demo:
-  video: "TODO: add prototype demo video link"
+  video: "https://www.youtube.com/watch?v=x4Ds_oYojNE"
   screenshots:
     - "docs/screenshots/Dashboard.png"
     - "docs/screenshots/Settings.png"
