@@ -1,7 +1,15 @@
 project_name: "Smart Hydroponic Garden System"
 project_type: "iot"            # web | mobile | api | ml | hardware | iot | embedded | hybrid
 
-impl_claim: "A BME280/BME680 reading taken by the Raspberry Pi appears on the signed-in user's dashboard within 35 seconds (30 s read interval + 5 s polling). When two consecutive readings fall outside the danger band of that user's active threshold profile, a Danger alert is saved for that user only and shown as a dashboard popup within 75 seconds; other accounts, with their own profiles, do not get it."
+impl_claim: >-
+  Every 30 seconds, the backend stores sensor readings and checks them against
+  each signed-in user's active profile; confirmed danger readings create an
+  account-specific alert shown on that user's dashboard. Signed-in users can
+  manually control the fan, humidifier, and grow light and set a daily
+  grow-light schedule. With GPIO enabled on the Pi, automatic control
+  independently switches the fan and humidifier at the active profile's
+  temperature and humidity limits, preserving each output's state inside its
+  profile range to provide hysteresis.
 
 languages: ["python", "javascript"]
 hardware_required: true         # live sensors, camera and relays need the Raspberry Pi 5
@@ -16,8 +24,8 @@ test:
   - "python -m pytest tests -v"
   - "cd frontend && npm run lint"
 run:
-  # Live data from the team's Raspberry Pi: frontend/.env points to the Pi's ngrok URL,
-  # so only the frontend runs locally. Open http://localhost:5173 and create an account.
+  - "python -m backend.src.main"
+  # For live Pi data, set frontend/.env VITE_API_BASE_URL to the Pi backend URL instead.
   - "cd frontend && npm run dev"
 
 mock_mode:
@@ -44,11 +52,18 @@ notes: >-
   temperature range to 90-95 C and save. Within about 75 s a temperature Danger popup
   appears without refreshing (refresh to see the card turn red); a second account with
   the default profile gets no alert.
-  Live readings: BME280 and BME680 on the Pi; the pH sensor still uses simulated data. (change later)
-  The live camera needs the Arducam V3 camera and shows "unavailable" in mock mode. 
-  The 4 relay-controlled outlets (light, humidifier, exhaust fan, water pump) are planned
-  and not implemented in software yet. The system is open loop: it never switches
-  anything on its own.
+  Live readings: BME280 and BME680 on the Pi; the pH sensor still uses simulated data.
+  Peristaltic pumps for pH and nutrient dosing, and water EC and water-level sensors, are planned additions
+  and are not part of the current implementation.
+  The camera needs the Arducam V3 and shows "unavailable" in mock mode. Manual controls
+  and the grow-light schedule require ACTUATOR_HARDWARE_ENABLED=True in the Pi repo-root
+  .env; it defaults to false. Automatic fan/humidifier control requires real sensors and
+  GPIO enabled, uses the signed-in user's active profile, and enforces a 30-second
+  minimum between ordinary relay changes. Missing or invalid sensor readings turn both
+  automatic outputs off. Relay map: fan on GPIO16/SSR CH1, humidifier on GPIO20/mechanical
+  IN2, and grow light on GPIO21/mechanical IN1; GPIO12/SSR CH2 is unused. Verify wiring
+  and loads before enabling physical outputs. Mock mode can test the dashboard, APIs,
+  profile/alert behavior, and controller logic, but cannot operate or verify real relays.
+  Backend tests (75) need no hardware and also run in GitHub Actions on every push.
   The mock_mode commands use bash syntax; on Windows PowerShell, set USE_MOCK_SENSORS=True
   in .env and VITE_API_BASE_URL=http://localhost:8000 in frontend/.env instead.
-  Backend tests (49) need no hardware and also run in GitHub Actions on every push.
