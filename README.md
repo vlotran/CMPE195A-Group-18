@@ -1,4 +1,4 @@
-# SMART HYDROPONIC GARDEN SYSTEM (the one we will submit)
+# SMART HYDROPONIC GARDEN SYSTEM
 
 ## Team
 - Hoa Tuong Minh Nguyen (GitHub: @MinhHoaNguyen)
