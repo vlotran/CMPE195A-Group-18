@@ -217,7 +217,11 @@ def test_manual_output_controls_use_active_low_mapped_gpio(client, monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["fan_on"] is True
-    assert set(ACTUATOR_PINS.values()) == {12, 16, 21}
+    assert ACTUATOR_PINS == {
+        "fan": 16,
+        "humidifier": 20,
+        "grow_light": 21,
+    }
     assert all(device.active_high is False for device in actuator_manager._devices.values())
 
     response = client.post(

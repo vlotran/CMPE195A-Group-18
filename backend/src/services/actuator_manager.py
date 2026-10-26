@@ -18,7 +18,7 @@ AUTOMATIC_MIN_SWITCH_INTERVAL_SECONDS = 30
 
 ACTUATOR_PINS = {
     "fan": 16,
-    "humidifier": 12,
+    "humidifier": 20,
     "grow_light": 21,
 }
 
