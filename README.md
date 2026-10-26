@@ -155,22 +155,25 @@ Your demo video link, plus screenshots or logs.
 
 - Frontend:
    + Landing Page:
+
    ![LandingPage](docs/screenshots/LandingPageScreenshot.png)
 
    ![SignIn](docs/screenshots/SignInScreenshot.png)
    
    + Dashboard:
+   
    ![DashboardPage](docs/screenshots/Dashboard.png)
 
    ![LiveCameraAndActuators](docs/screenshots/LiveCameraAndActuator.png)
 
    ![SensorAndChartWidgets](docs/screenshots/SensorChartWidgets.png)
+   
    + Settings:
    ![SettingPage](/docs/screenshots/Settings.png)
 
    + Appearance:
    ![AppearancePage](/docs/screenshots/Appearance.png)
-   
+
 ## Technical Stack
 - **Languages:** Python, JavaScript (JSX), SQL
 - **Frontend:** React 19, Vite 7, Tailwind CSS 4 + custom CSS, custom SVG charts
