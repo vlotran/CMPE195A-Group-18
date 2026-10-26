@@ -151,7 +151,7 @@ GitHub Actions runs all of these on every push and pull request (`.github/workfl
 A green run on `main` triggers the deploy to the Pi (`.github/workflows/deploy.yml`). Details: [docs/CI_CD.md](docs/CI_CD.md).
 
 ## Demo
-Your demo video link, plus screenshots or logs.
+[CMPE 195B Implementation 2: Prototype - YouTube](https://www.youtube.com/watch?v=x4Ds_oYojNE)
 
 - Frontend:
    + Landing Page:
