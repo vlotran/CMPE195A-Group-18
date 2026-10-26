@@ -6,7 +6,7 @@
 - Thai Nguyen (GitHub: @thaiHnguyen)
 
 ## Project Description
-Small hydroponic growers have to check pH, temperature and humidity by hand, and problems often go unnoticed until plants are damaged. Our system uses a Raspberry Pi 5 with live camera and I2C sensors to read the garden data every 30 seconds, stores the readings, and shows them on a browser dashboard. It is an open-loop system: it senses, stores, displays and alerts so that the user can decide what to do. 
+Small hydroponic growers have to check pH, temperature and humidity by hand, and problems often go unnoticed until plants are damaged. Our system uses a Raspberry Pi 5 with a live camera and sensors to read garden data every 30 seconds, stores the readings, and shows them on a browser dashboard. It evaluates readings against each signed-in user's active profile and shows alerts. Users can manually control the fan, humidifier and grow light, schedule the grow light, or enable profile-based on/off temperature and humidity control.
 
 ## Prototype Scope
 **Works end to end now:**
@@ -26,14 +26,15 @@ Small hydroponic growers have to check pH, temperature and humidity by hand, and
 
 - Mock sensor mode: the whole system runs on a laptop without hardware
 
+- Shared actuator controls: manual fan, humidifier and grow-light controls; daily grow-light scheduling; optional automatic fan/humidifier control using the signed-in user's active profile and hysteresis
+
 - CI on every push (GitHub Actions): tests, lint and build on every push; every green commit on main is deployed to the Pi automatically, with a database backup and automatic rollback if the backend doesn't come back healthy
 
 **Incomplete:**
 - Password reset ("Forgot password?") is not implemented
 - The frontend runs locally and reaches the Pi through ngrok; it is not hosted at a public URL yet.
-- The pH sensor still runs on simulated data on the Pi; BME280 and BME680 readings are live (remove if it is integrated before submititng)
-- Password reset ("Forgot password?") is not implemented
-...
+- The pH sensor still uses simulated data on the Pi; BME280 and BME680 readings are live.
+- Automatic actuator control and physical relay outputs require Pi hardware and are disabled by default; mock mode cannot verify physical switching.
 
 ## System Architecture
 ![ProtoypeDiagram](docs/system-architecture/ProtoypeDiagram.png)
@@ -42,14 +43,14 @@ Small hydroponic growers have to check pH, temperature and humidity by hand, and
     + BME680: Air temperature (C), air humidity (%), air quality
     + Atlas Scientific EZO-pH: Water pH (0–14)
 - **Live Camera:** Arducam V3 using Picamera2 to stream MJPEG to the dashboard. The browser gets a short-lived stream token, so the login token never appears in a URL. Without a camera, the widget shows "unavailable" and everything else keeps working.
-- **Data collector:** a background task in the backend reads every sensor, stores the reading, and evaluates it against every user's active profile. If a sensor's hardware is missing, that sensor falls back to mock data on its own..
+- **Data collector:** a background task in the backend reads every sensor, stores the reading, and evaluates it against every user's active profile. If a sensor's hardware is missing, that sensor falls back to mock data on its own.
 - **API:** FastAPI. Sensor data is public; profiles and alerts need a login token (`Authorization: Bearer <token>`).
 - **Networking**: the ngrok agent runs on the Pi and opens an outbound tunnel to ngrok, which gives the backend a public HTTPS URL and forwards each request to localhost:8000. The Pi needs no port forwarding or public IP, so it works behind the school or home network.
 - **Deployment:** a self-hosted GitHub runner on the Pi pulls each green commit on `main`, backs up the database, restarts the `hydroponic` systemd service and rolls back if the health check fails ([docs/CI_CD.md](docs/CI_CD.md)).
 - **Database:** SQLite (`data/hydroponic.db`) with tables for readings, users, sessions, profiles and alerts. Older databases are upgraded automatically on startup.
 - **Frontend:** React + Vite. It calls the backend through `VITE_API_BASE_URL: localhost:8000` during development, or the Pi's ngrok URL.
-- **Outlets (planned, dashed in the diagram):** a 4-channel relay board on the Pi's GPIO switches four outlets: light, humidifier, exhaust fan and water pump. The user will turn each one on or off with a dashboard button; the request goes through the same login-protected API.
-- **Open loop:** the system senses, stores, displays and alerts, but never acts by itself. Readings never trigger an outlet automatically: user reads the dashboard and decides whether to switch something.
+- **Actuators:** authenticated dashboard controls switch the fan (GPIO16 / SSR CH1), humidifier (GPIO20 / mechanical IN2) and grow light (GPIO21 / mechanical IN1). GPIO12 / SSR CH2 is unused. Users can set a daily grow-light schedule. Optional automatic control switches the fan and humidifier using profile-range hysteresis; it requires real sensors and `ACTUATOR_HARDWARE_ENABLED=True`, which defaults to false. No water-pump control is implemented.
+- **Control behavior:** manual controls are user-operated. When automatic temperature/humidity control is explicitly enabled, sensor readings can switch the fan and humidifier on or off; it is not a variable-speed or PID controller.
 - **Deployment Pipeline**:
 ![DeploymentPipeline](docs/system-architecture/DeploymentPipeline.png)
 
@@ -58,12 +59,12 @@ Small hydroponic growers have to check pH, temperature and humidity by hand, and
 - Node.js: 20.19+ or 22.12+
 - Git: any
 
-**Hardware (only for working sensors and camera):** 
-    + Raspberry Pi 5 with I2C enabled, BME280, BME680, Atlas Scientific EZO-pH (I2C mode), Raspberry Pi camera module. 
-    + Outputs: a 4-channel relay board on GPIO with four outlets (light, humidifier, exhaust fan, water pump)
-    + The software to switch them is planned. Without hardware, use mock mode.
+**Hardware (for live sensors, camera and physical actuator control):**
+    + Raspberry Pi 5 with I2C enabled, BME280, BME680, Atlas Scientific EZO-pH (I2C mode), and a compatible Raspberry Pi camera.
+    + Relay outputs: fan on GPIO16 / SSR CH1, humidifier on GPIO20 / mechanical IN2, and grow light on GPIO21 / mechanical IN1. GPIO12 / SSR CH2 is unused; water-pump control is not implemented.
+    + Physical outputs default to disabled. Verify wiring, relay compatibility and connected loads before setting `ACTUATOR_HARDWARE_ENABLED=True`. Without hardware, use mock mode to test software behavior.
 
-**Accounts:** none needed to run locally. Public access to the Pi uses an ngrok account (held by the team).
+**Accounts:** no external account is needed to run locally, but create an application account to use the signed-in dashboard. Public access to the team's Pi uses the team's ngrok setup.
 
 ## Installation
 1. Clone the repository:
@@ -105,9 +106,11 @@ Small hydroponic growers have to check pH, temperature and humidity by hand, and
 - `USE_MOCK_SENSORS`: `True` = simulated sensors, `False` = real I2C sensors 
 - `SENSOR_READ_INTERVAL`: Seconds between sensor reads 
 - `ALLOWED_ORIGINS`: Frontend URLs allowed to call the API (comma-separated, or `*`) 
+- `ACTUATOR_HARDWARE_ENABLED`: Enables physical relay outputs; defaults to `False` and should only be enabled on the Pi after checking wiring and loads
+- `ACTUATOR_PROFILE_USER_ID`: Optional user ID for actuator observation logging; automatic control instead uses the signed-in user who enables it
 
 **Frontend** (`frontend/.env`):
-- `VITE_API_BASE_URL`: Backend URL: the local backend (for Mock sensor data) or the Pi's ngrok URL (for live sensor data)
+- `VITE_API_BASE_URL`: Backend URL: the local backend (for mock sensor data) or the Pi's ngrok URL (for live sensor data)
 
 ## Running the Prototype
 Start the backend **from the repo root** (the database path is relative to it):
@@ -121,7 +124,7 @@ npm run dev
 ```
 Open `http://localhost:5173`, click **Get Started -> Create account**, then sign in.
 
-- **Without hardware:** `USE_MOCK_SENSORS=True` and `VITE_API_BASE_URL=http://localhost:8000`. The camera widget shows "unavailable".
+- **Without hardware:** `USE_MOCK_SENSORS=True` and `VITE_API_BASE_URL=http://localhost:8000`. The camera widget shows "unavailable"; physical actuator controls remain disabled.
 - **With the Pi:** the backend runs on the Pi as the `hydroponic` systemd service (`sudo systemctl status hydroponic`). Point `VITE_API_BASE_URL` at the Pi's ngrok URL and create an account there (accounts are stored per database).
 - **API docs:** `http://localhost:8000/docs`
 
@@ -133,12 +136,13 @@ After changing `frontend/.env`, restart `npm run dev`.
 python -m pytest tests -v                       # backend, from the repo root
 cd frontend && npm run lint && npm run build    # frontend checks
 ```
-49 backend tests, no hardware needed:
+75 backend tests, no hardware needed:
 
 - `tests/test_alert_evaluator.py`:  24 tests - Normal / Warning / Danger bands for every metric, hysteresis, recovery 
 - `tests/test_auth.py`: 15 tests -  Register, login, wrong password, logout, expired sessions; users can't see or change each other's profiles or alerts; per-user alerts 
 - `tests/test_sensor_factory.py`: 7 tests - Real/mock selection per sensor data and fallback to mock when hardware is missing 
 - `tests/test_camera_manager.py`: 3 tests - Stream output waits for a fresh frame; concurrent starts open the camera only once 
+- `tests/test_actuator_controller.py`, `tests/test_actuator_observation.py`, and `tests/test_actuators.py`: profile-band hysteresis, sensor observation, API behavior, relay mapping, manual output and grow-light schedule tests (mock GPIO; no physical relays required)
 
 GitHub Actions runs all of these on every push and pull request (`.github/workflows/ci.yml`). 
 A green run on `main` triggers the deploy to the Pi (`.github/workflows/deploy.yml`). Details: [docs/CI_CD.md](docs/CI_CD.md).
@@ -158,11 +162,9 @@ Your demo video link, plus screenshots or logs.
 - **Testing / CI/CD:** pytest, ESLint, GitHub Actions, self-hosted runner + systemd on the Pi
 
 ## What's Next
-- Delete/Clear Alerts features for the AlertPanels in DashBoard
-- Deploy and Host the frontend at a public URL
-- Outlet control: backend endpoints for the 4 relays and on/off buttons on the dashboard (light, humidifier, fan, water pump)
-- Connect and calibrate the pH sensor so all four metrics are live? (remove if pH sensor is integrated before submitting this)
-- Refine alert feature and push notifications when a reading reaches Warning or Danger
-- Email service integration 
-- Password Reset via email
-- Wire the correct font to Frontend
+- Deploy and host the frontend at a public URL
+- Connect and calibrate the pH sensor so water pH readings are live on the Pi
+- Add peristaltic dosing pumps for pH adjustment and nutrient dosing, plus water EC and water-level sensors
+- Consider push notifications for Warning and Danger alerts
+- Add email integration and password reset
+- Refine the dashboard typography and resolve the remaining font asset warnings
