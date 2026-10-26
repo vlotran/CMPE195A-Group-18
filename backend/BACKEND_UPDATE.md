@@ -56,9 +56,9 @@ The data collector evaluates control with its regular sensor-read cycle, which
 defaults to 30 seconds. Automatic mode is not restored after backend restart;
 it starts disabled. A manual fan or humidifier command disables automatic mode.
 Current relay map:
-GPIO16 SSR CH1 = fan; GPIO12 SSR CH2 = humidifier; GPIO21 mechanical IN1 =
-grow light (manual only); GPIO20 mechanical IN2 = unused. Verify relay and load
-behavior before enabling automatic control on the Pi.
+GPIO16 SSR CH1 = fan; GPIO20 mechanical IN2 = humidifier; GPIO21 mechanical
+IN1 = grow light. GPIO12 SSR CH2 is unused. Verify relay and load behavior
+before enabling automatic control on the Pi.
 
 The authenticated actuator API/UI provides shared manual fan, humidifier, and
 grow-light controls plus a daily grow-light schedule in the Pi's local time.
