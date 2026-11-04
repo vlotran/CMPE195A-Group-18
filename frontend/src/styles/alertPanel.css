@@ -206,7 +206,7 @@
     transition: opacity 0.15s ease, transform 0.15s ease;
 }
 .alert-row:hover .alert-row-actions,
-.alert-row:focus-within .alert-row-actions {
+.alert-row:has(.alert-row-btn:focus-visible) .alert-row-actions {
     opacity: 1;
     transform: none;
     pointer-events: auto;
