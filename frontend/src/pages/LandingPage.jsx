@@ -35,9 +35,7 @@ function LandingPage({ onLogin }) {
     const openLogin = () => { setAuthError(""); setShowCreateAccount(false); setShowLogin(true); };
     const openCreateAccount = () => { setAuthError(""); setNotice(""); setShowLogin(false); setShowCreateAccount(true); };
 
-    // =========================
     // SIGN IN
-    // =========================
 
     // checks the email + password with the backend (POST /api/auth/login).
     // Inputs are read by their `name` attribute, so the JSX below stays the same.
@@ -61,9 +59,7 @@ function LandingPage({ onLogin }) {
         }
     };
 
-    // =========================
     // CREATE ACCOUNT
-    // =========================
 
     // creates the account on the backend (POST /api/auth/register),
     // then opens Sign In with the email already filled in.
@@ -100,8 +96,8 @@ function LandingPage({ onLogin }) {
     return (
         <div className="landing-page">
 
-            {/*light that follows the cursor, behind frosted glass */}
-            <GlassBackground />
+            {/* light that follows the cursor, without the frosted glass */}
+            <GlassBackground frosted={false} />
 
             {/* Header */}
             <header className="landing-header">

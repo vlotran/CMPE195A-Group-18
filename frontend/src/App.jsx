@@ -74,10 +74,10 @@ function App() {
 
     // key: switching accounts remounts the dashboard with fresh state
     return (
-        <>
+        <div className="app-shell">
             <GlassBackground soft />
             <AuthedApp key={user.id} user={user} onLogout={handleLogout} />
-        </>
+        </div>
     );
 }
 
