@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles/theme.css'   // color variables for dark + light - load first
 import './styles/index.css'
+import './styles/typography.css'   // the 3 project fonts - after index.css so they replace its default
 //Switch between these to test for mocking data and real data when connecting to backend
 import App from './App.jsx'
 import { TempUnitProvider } from "./contexts/TempUnitContext.jsx";

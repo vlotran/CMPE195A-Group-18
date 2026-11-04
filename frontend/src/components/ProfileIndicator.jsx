@@ -83,7 +83,7 @@ function ProfileIndicator({ profile, onManage }) {
 
                     {onManage && (
                         <button type="button" className="profile-indicator-manage" onClick={onManage}>
-                            Change profile in Settings →
+                            Change profile in Settings
                         </button>
                     )}
                 </div>

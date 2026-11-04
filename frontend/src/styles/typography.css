@@ -1,38 +1,65 @@
-/* This class will handle the font of the system */
+/* The fonts of the system. Imported once in main.jsx, so every page gets them.
+   To change a font, register it below and edit its variable in :root. */
 
-/*Register fontface*/
+/* Register font files */
+/*Heading*/
 @font-face {
-    font-family: "Montserrat";
-    src: url("../assets/fonts/Montserrat/static/Monserrat-Bold.ttf") format("truetype");
-    font-weight: 700;
+    font-family: "Hanken Grotesk";
+    src: url("../assets/fonts/HankenGrotesk/HankenGrotesk-VariableFont_wght.ttf") format("truetype");
+    font-weight: 100 900;
+    font-display: swap;
 }
+/*Body*/
 @font-face {
-    font-family: "Montserrat";
-    src: url("../assets/fonts/Montserrat/static/Monserrat-SemiBold.ttf") format("truetype");
-    font-weight: 600;
+    font-family: "Source Sans 3";
+    src: url("../assets/fonts/SourceSans3/SourceSans3-VariableFont_wght.ttf") format("truetype");
+    font-weight: 200 900;
+    font-display: swap;
 }
+/*data*/
 @font-face {
-    font-family: "Montserrat";
-    src: url("../assets/fonts/Montserrat/static/Monserrat-Regular.ttf") format("truetype");
+    font-family: "Barlow";
+    src: url("../assets/fonts/Barlow/Barlow-Regular.ttf") format("truetype");
     font-weight: 400;
-}
-@font-face {
-    font-family: "Space Mono";
-    src: url("../assets/fonts/Space_Mono/SpaceMono-Regular.ttf") format("truetype");
-    font-weight: 400;
-}
-@font-face {
-    font-family: "Space Mono";
-    src: url("../assets/fonts/Space_Mono/SpaceMono-Bold.ttf") format("truetype");
-    font-weight: 700;
+    font-display: swap;
 }
 
-/*Font Utilities*/
-.title-font{
-    font-family: "Montserrat", sans-serif;
-    font-weight: 700;
+/* One variable per role */
+:root {
+    --font-heading: "Hanken Grotesk", system-ui, sans-serif;
+    --font-body: "Source Sans 3", system-ui, sans-serif;
+    --font-data: "Barlow", system-ui, sans-serif;
+
+    /* Body is the default for all text */
+    font-family: var(--font-body);
 }
 
-.body-font{
-    font-family: "Space Mono", monospace;
+/* Browsers don't pass the page font down to form fields by default */
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
+/* Heading: page, card and popup titles */
+h1, h2, h3, h4, h5, h6,
+.profile-name {
+    font-family: var(--font-heading);
+}
+
+/* Data: sensor readings, thresholds, chart numbers and timestamps */
+.sensor-value,
+.threshold-range,
+.profile-indicator-item-value,
+.summary-avg,
+.summary-range,
+.summary-minmax,
+.axis-label,
+.x-label,
+.tooltip-value,
+.tooltip-timestamp,
+.sensor-chart-footer,
+.alert-row-time {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
 }

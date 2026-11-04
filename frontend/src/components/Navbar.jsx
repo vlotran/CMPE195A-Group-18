@@ -21,7 +21,6 @@ import logoLight from "../assets/Logo_light.png";
 import logoDark from "../assets/Logo_dark.png";
 import { useTheme, LIGHT } from "../contexts/ThemeContext.jsx";
 import TabBar from "./TabBar.jsx";                  // tabs live in the navbar now
-import "../styles/typography.css";
 import "../styles/navbar.css";
 
 function Navbar({ deviceName, status, activeTab, onTabChange, userName, onLogout }) {
