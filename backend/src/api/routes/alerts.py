@@ -1,7 +1,7 @@
 """
 Alert management endpoints
 
-CHANGED (login): alerts are per user. Each user only sees alerts raised by
+alerts are per user. Each user only sees alerts raised by
 their own active profile.
 """
 
@@ -29,7 +29,7 @@ async def get_alerts(
     The frontend polls this with severity=danger to drive the danger modal.
     """
     try:
-        # CHANGED: severity is now filtered in SQL, so `limit` counts matching
+        # severity is filtered in SQL, so `limit` counts matching
         # alerts only (before, 50 warnings could hide every danger alert)
         return await db_manager.get_alerts(
             user["id"], unread_only=unread_only, limit=limit, severity=severity
@@ -37,6 +37,40 @@ async def get_alerts(
 
     except Exception as e:
         logger.error(f"Error getting alerts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/dismiss")
+async def dismiss_all(
+    severity: Optional[str] = Query(
+        None, pattern="^(normal|warning|danger)$", description="Only clear this type"
+    ),
+    max_id: Optional[int] = Query(None, description="Skip alerts newer than this id"),
+    user: dict = Depends(get_current_user),
+):
+    """"Clear all". Hides the user's alerts; the rows are kept as history."""
+    try:
+        count = await db_manager.dismiss_alerts(user["id"], severity=severity, max_id=max_id)
+        return {"status": "success", "dismissed": count}
+
+    except Exception as e:
+        logger.error(f"Error dismissing alerts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/{alert_id}/dismiss")
+async def dismiss(alert_id: int, user: dict = Depends(get_current_user)):
+    """"Delete" on one alert. Hides it for the user; the row is kept as history."""
+    try:
+        success = await db_manager.dismiss_alert(alert_id, user["id"])
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found")
+        return {"status": "success", "message": f"Alert {alert_id} dismissed"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error dismissing alert {alert_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
