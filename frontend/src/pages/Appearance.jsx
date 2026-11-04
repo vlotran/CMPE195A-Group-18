@@ -19,6 +19,7 @@ import { useTempUnit } from "../contexts/TempUnitContext.jsx";
 import { useTheme, DARK } from "../contexts/ThemeContext.jsx";
 import { CELSIUS, FAHRENHEIT } from "../utils/units.js";
 import "../styles/appearance.css";
+import "../styles/dashboardEnter.css"; 
 
 function Appearance() {
     const { tempUnit, setTempUnit } = useTempUnit();
@@ -38,7 +39,7 @@ function Appearance() {
                 </button>
             </div>
 
-            {/* Row 2: Temperature unit, segmented C | F (moved from Navbar) */}
+            {/* Row 2: Temperature unit, segmented C | F */}
             <div className="appearance-row">
                 <span className="appearance-label">Temperature unit</span>
                 <div className="unit-toggle" role="group" aria-label="Temperature unit">
