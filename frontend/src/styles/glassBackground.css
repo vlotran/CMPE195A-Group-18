@@ -7,7 +7,7 @@
    light and popups (alert panel, dialogs) inside the widget. */
 .app-shell {
     position: relative;
-    isolation: isolate;
+    isolation: isolate;        
     padding: 24px;
     border: 1px solid rgba(var(--fg-rgb), 0.12);
     border-radius: 24px;
@@ -19,7 +19,7 @@
 @property --my { syntax: "<length-percentage>"; inherits: true; initial-value: 35vh; }
 
 .glass-bg {
-    position: fixed;            /* the light covers the whole screen, inside and outside the widget */
+    position: fixed;           
     inset: 0;
     z-index: -1;
     pointer-events: none;
@@ -29,19 +29,20 @@
     transition: --mx 0.25s ease-out, --my 0.25s ease-out;
 
     /* Light strength (tune here) */
-    --glow: 0.55;               /* light under the cursor */
+    --glow: 0.7;               /* light under the cursor */
     --orb-1: 0.35;              /* top-left orb */
     --orb-2: 0.25;              /* bottom-right orb */
     --corner: 0.12;             /* fixed corner glow */
 }
 
-/* Dashboard: dimmer, so cards and charts stay easy to read */
+/* Dashboard and landing page: dimmer, so content stays easy to read */
 .glass-bg--soft {
     --glow: 0.3;
     --orb-1: 0.16;
     --orb-2: 0.12;
     --corner: 0.06;
 }
+
 .glass-bg-light {
     position: absolute;
     inset: -120px;           
@@ -59,7 +60,6 @@
         radial-gradient(900px circle at 100% 100%, rgba(var(--accent-rgb), var(--corner)), transparent 70%);
 }
 
-/* Floating orbs: give the glass something to bend so it reads as glass */
 .glass-bg-light::before,
 .glass-bg-light::after {
     content: "";
@@ -84,11 +84,6 @@
     to   { transform: translate(120px, 80px) scale(1.15); }
 }
 
-.glass-bg--clear .glass-bg-light { filter: none; }
-.glass-bg--clear .glass-bg-light::before,
-.glass-bg--clear .glass-bg-light::after { display: none; }
-
-/* 2. Frosted glass pane: fills the widget only, and shows it as a rounded panel */
 .glass-bg-pane {
     position: absolute;
     inset: 0;
@@ -107,7 +102,7 @@
     );
 }
 
-/* Phones: less padding, so the content keeps its width */
+/* Phones: less padding*/
 @media (max-width: 640px) {
     #root:has(.app-shell) { padding: 12px; }
     .app-shell { padding: 12px; border-radius: 16px; }

@@ -15,6 +15,7 @@
     isolation: isolate; 
 }
 
+
 /* Content above the background layers */
 .landing-header,
 .landing-hero,
@@ -349,6 +350,92 @@
 
     border-color:
         rgba(var(--accent-rgb), 0.3);
+}
+
+/* Border beam: on hover, a glowing line travels around the card's border.
+   Orange on dark, blue on light (--accent-rgb from theme.css).
+   Tune here: --beam-speed for the speed, the drop-shadows for the glow size. */
+
+/* Registering the angle lets CSS animate it, which turns the gradient below */
+@property --beam-angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
+}
+
+.landing-team-member {
+    position: relative;     /* anchors .member-beam */
+}
+
+/* The glow. It's on this parent because a filter on the ring itself would get
+   cut off by the ring's mask. The shadows follow the bright part of the line. */
+.member-beam {
+    --beam-speed: 7s;
+    --beam-head:  236, 101, 4;
+
+    position: absolute;
+    inset: -1px;            /* sits on top of the card's 1px border */
+    border-radius: inherit;
+    pointer-events: none;   /* the links underneath stay clickable */
+
+    filter:
+        drop-shadow(0 0 3px rgb(var(--accent-rgb)))
+        drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.7));
+
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+:root[data-theme="light"] .member-beam {
+    --beam-head: 4, 81, 236;       /* light theme */
+}
+
+.member-beam::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+
+    background: repeating-conic-gradient(
+        from var(--beam-angle),
+        transparent 0 112deg,
+        rgba(var(--accent-rgb), 0.65) 151deg,
+        rgb(var(--beam-head)) 176deg,
+        transparent 180deg
+    );
+
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -mask-composite: xor;
+            mask:
+                linear-gradient(#000 0 0) content-box exclude,
+                linear-gradient(#000 0 0);
+
+    animation: memberBeam var(--beam-speed) linear infinite paused;
+}
+
+/* Links reached with the Tab key show it too */
+.landing-team-member:hover .member-beam,
+.landing-team-member:has(a:focus-visible) .member-beam {
+    opacity: 1;
+}
+.landing-team-member:hover .member-beam::before,
+.landing-team-member:has(a:focus-visible) .member-beam::before {
+    animation-play-state: running;
+}
+
+@keyframes memberBeam {
+    to { --beam-angle: 360deg; }
+}
+
+/* "Reduce motion": a still glowing border instead of a moving line */
+@media (prefers-reduced-motion: reduce) {
+    .member-beam::before {
+        animation: none;
+        background: rgb(var(--accent-rgb));
+    }
 }
 
 .team-avatar {

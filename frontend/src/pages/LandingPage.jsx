@@ -96,8 +96,8 @@ function LandingPage({ onLogin }) {
     return (
         <div className="landing-page">
 
-            {/* light that follows the cursor, without the frosted glass */}
-            <GlassBackground frosted={false} />
+            {/* same light as the dashboard, without the frosted glass */}
+            <GlassBackground soft frosted={false} />
 
             {/* Header */}
             <header className="landing-header">
@@ -191,6 +191,7 @@ function LandingPage({ onLogin }) {
                 <div className="landing-team">
 
                     <div className="landing-team-member team-member-detailed">
+                        <span className="member-beam" aria-hidden="true" />
                         <div className="team-avatar">
                             H
                         </div>
@@ -224,6 +225,7 @@ function LandingPage({ onLogin }) {
                         </div>
                     </div>
                 <div className="landing-team-member team-member-detailed">
+                    <span className="member-beam" aria-hidden="true" />
                     <div className="team-avatar">
                         V
                     </div>
@@ -257,6 +259,7 @@ function LandingPage({ onLogin }) {
                     </div>
                 </div>
                 <div className="landing-team-member team-member-detailed">
+                    <span className="member-beam" aria-hidden="true" />
                     <div className="team-avatar">
                         T
                     </div>

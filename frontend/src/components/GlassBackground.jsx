@@ -9,9 +9,8 @@
  * Touch screens and "reduce motion" keep a still glow.
  *
  * Props:
- *  - soft: dimmer light, for pages with lots of content (the dashboard)
- *  - frosted: false for no glass at all: no pane, no blur, no orbs. Just the
- *    cursor light (the landing page).
+ *  - soft: dimmer light, so page content stays easy to read
+ *  - frosted: false for just the light, with no glass pane (the landing page)
  */
 import { useEffect, useRef } from "react";
 import "../styles/glassBackground.css";
@@ -43,7 +42,7 @@ function GlassBackground({ soft = false, frosted = true }) {
         <>
             <div
                 ref={ref}
-                className={`glass-bg ${soft ? "glass-bg--soft" : ""} ${frosted ? "" : "glass-bg--clear"}`}
+                className={`glass-bg ${soft ? "glass-bg--soft" : ""}`}
                 aria-hidden="true"
             >
                 <div className="glass-bg-light" />
