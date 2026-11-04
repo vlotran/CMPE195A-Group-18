@@ -29,7 +29,7 @@ ON sensor_readings(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_sensor_readings_type 
 ON sensor_readings(sensor_type, timestamp DESC);
 
--- USERS & SESSIONS (NEW: login/logout)
+-- USERS & SESSIONS
 -- Passwords are never stored: only a salted scrypt hash (see services/auth.py).
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,7 +57,6 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 --   - Plant types (Lettuce, Tomato, Basil)
 --   - Custom system setups (My Indoor Garden, Greenhouse A)
 --   - Environmental presets (Summer, Winter, Optimal)
--- CHANGED (login): profiles belong to a user.
 --   user_id IS NULL     -> template (the presets below). Never shown or used for
 --                          alerts directly; copied into every new account.
 --   user_id = <user>    -> that user's own profile. Each user has one active profile.
@@ -109,7 +108,7 @@ CREATE TABLE IF NOT EXISTS threshold_configurations (
     CHECK(aqi_min <= aqi_max)
 );
 
--- NEW: name is unique per user, and unique among templates.
+--  name is unique per user, and unique among templates.
 -- (A plain UNIQUE(user_id, name) wouldn't work for templates: SQLite treats
 -- NULL user_ids as all different, so INSERT OR IGNORE would re-add presets.)
 CREATE UNIQUE INDEX IF NOT EXISTS ux_config_user_name
@@ -122,7 +121,7 @@ CREATE INDEX IF NOT EXISTS idx_config_user_active
 ON threshold_configurations(user_id, is_active);
 
 -- Ensure only one active configuration at a time PER USER
--- CHANGED: used to deactivate every other row in the table
+-- used to deactivate every other row in the table
 CREATE TRIGGER IF NOT EXISTS one_active_configuration
 BEFORE UPDATE OF is_active ON threshold_configurations
 WHEN NEW.is_active = 1
@@ -135,7 +134,7 @@ END;
 -- ALERTS
 CREATE TABLE IF NOT EXISTS alerts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    -- NEW (login): whose active profile produced this alert. NULL = alerts from
+    -- whose active profile produced this alert. NULL = alerts from
     -- before accounts existed; they aren't shown to anyone.
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     alert_type TEXT NOT NULL,
@@ -147,10 +146,12 @@ CREATE TABLE IF NOT EXISTS alerts (
     threshold_max REAL,
     is_read BOOLEAN DEFAULT 0,
     is_resolved BOOLEAN DEFAULT 0,
+    -- NEW: user removed it from their alert list. The row is kept as history.
+    is_dismissed BOOLEAN NOT NULL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     resolved_at DATETIME,
-    
-    -- CHANGED: matches the dashboard states (was info / warning / critical).
+
+    -- matches the dashboard states (was info / warning / critical).
     -- db_manager rebuilds an older alerts table and renames its rows on startup.
     CHECK(severity IN ('normal', 'warning', 'danger'))
 );
@@ -253,9 +254,7 @@ VALUES
         5.5, 6.5, 18, 24, 60, 80, 0);
 
 
--- ============================================================
 -- SYSTEM SETTINGS
--- ============================================================
 INSERT OR IGNORE INTO settings (key, value, description) VALUES
     ('sensor_read_interval', '60', 'How often to read sensors (seconds)'),
     ('alert_cooldown', '300', 'Minimum time between duplicate alerts (seconds)'),
@@ -263,9 +262,8 @@ INSERT OR IGNORE INTO settings (key, value, description) VALUES
     ('system_name', 'My Hydroponic System', 'User-defined name for this system');
 
 
--- ============================================================
+
 -- NOTES FOR DEVELOPERS
--- ============================================================
 -- 
 -- USING THRESHOLD CONFIGURATIONS:
 -- 
