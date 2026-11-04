@@ -2,7 +2,7 @@
  * API Service Layer
  *
  * EXISTING endpoints are untouched.
- * NEW endpoints added at the bottom for configuration CRUD:
+ * the endpoints added at the bottom for configuration CRUD:
  *  - createConfiguration()
  *  - updateConfiguration()
  *  - deleteConfiguration()
@@ -16,12 +16,11 @@ if (!import.meta.env.VITE_API_BASE_URL) {
     console.warn("[api] VITE_API_BASE_URL not set: using http://localhost:8000. Copy frontend/.env.example to frontend/.env.");
 }
 
-//  AUTH TOKEN (NEW: login)
-//  AUTH TOKEN
+//  AUTH TOKEN 
 // The token from /api/auth/login is kept in the browser and sent with every
 // request as "Authorization: Bearer <token>".
 //   "Remember me" checked   -> localStorage   (survives closing the browser;
-//                                             the backend still ends it after 6 h)
+//                                          the backend still ends it after 6 h)
 //   "Remember me" unchecked -> sessionStorage (cleared when the browser closes)
 // Storage access is wrapped in try/catch: it can throw in private windows.
 const TOKEN_KEY = "hydrogarden_token";
@@ -53,13 +52,13 @@ export function clearToken() {
 }
 
 // App.jsx listens for this to send the user back to the landing page when the
-// backend rejects the token (expired after 6 h, or logged out elsewhere).
+// backend rejects the token (expired after 6 h, or logged out elsewhere)
 export const AUTH_EXPIRED_EVENT = "auth:expired";
 
 async function fetchJSON(endpoint, options = {}) {
     const token = getToken();
     // build headers last. Before, `...options` came after `headers`,
-    // so passing options.headers silently dropped Content-Type.
+    // so passing options.headers silently dropped Content-Type
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers: {
@@ -86,7 +85,7 @@ async function fetchJSON(endpoint, options = {}) {
         }
 
         // a rejected token means the session is over. Login itself also
-        // returns 401 (wrong password), but there is no token yet in that case.
+        // returns 401 (wrong password), but there is no token yet in that case
         if (response.status === 401 && token) {
             clearToken();
             window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
@@ -97,7 +96,6 @@ async function fetchJSON(endpoint, options = {}) {
     return response.json();
 }
 
-//  AUTH (NEW: login)
 //  AUTH 
 // Backend: backend/src/api/routes/auth.py
 
@@ -291,4 +289,19 @@ export async function getAlerts({ severity, limit = 20, unreadOnly = false } = {
 // mark one alert as read (backend: PATCH /api/alerts/{id}/read)
 export async function markAlertRead(alertId) {
     return fetchJSON(`/api/alerts/${alertId}/read`, { method: "PATCH" });
+}
+
+// remove one alert from this user's list (backend keeps it as history)
+export async function dismissAlert(alertId) {
+    return fetchJSON(`/api/alerts/${alertId}/dismiss`, { method: "PATCH" });
+}
+
+//  "Clear all". severity -> only that type; maxId -> skip alerts newer than
+// this, so one raised after the panel loaded isn't cleared unseen
+export async function dismissAlerts({ severity, maxId } = {}) {
+    const params = new URLSearchParams();
+    if (severity) params.set("severity", severity);
+    if (maxId != null) params.set("max_id", String(maxId));
+    const query = params.toString();
+    return fetchJSON(`/api/alerts/dismiss${query ? `?${query}` : ""}`, { method: "PATCH" });
 }
