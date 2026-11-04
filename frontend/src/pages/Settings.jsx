@@ -9,6 +9,7 @@
  */
 import React, { useState } from "react";
 import "../styles/settings.css";
+import "../styles/dashboardEnter.css";  
 import plusIcon from "../assets/icons/plus.png";   
 
 import ProfileCard from "../components/ProfileCard.jsx";

@@ -19,7 +19,6 @@ import AlertPanel from "./components/AlertPanel.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import LoadingBar from "./components/LoadingBar.jsx";
 import GlassBackground from "./components/GlassBackground.jsx"; 
-
 import useDashboardData from "./hooks/useDashboardData.js";
 import useActuators from "./hooks/useActuators.js";
 
@@ -59,7 +58,7 @@ function App() {
         try {
             await logoutUser();
         } catch (e) {
-            console.error("Logout request failed:", e);   // token is cleared anyway
+            console.error("Logout request failed:", e);   
         }
         setUser(null);
     };
@@ -201,6 +200,7 @@ function AuthedApp({ user, onLogout }) {
             </>
         );
     }
+
     // Error State
     if (error) {
         return (
@@ -266,7 +266,7 @@ function AuthedApp({ user, onLogout }) {
             <AlertPanel
                 open={alertsOpen}
                 onClose={() => setAlertsOpen(false)}
-                onChanged={() => setAlertsVersion((v) => v + 1)}   // refresh the badge after "Mark all as read"
+                onChanged={() => setAlertsVersion((v) => v + 1)} 
             />
 
             {/*Alert Modal: use when threshold is on DANGER */}
