@@ -21,15 +21,16 @@ ADDED_COLUMNS = [
     ("threshold_configurations", "pressure_max", "REAL NOT NULL DEFAULT 1030"),
     ("threshold_configurations", "aqi_min", "REAL NOT NULL DEFAULT 1"),
     ("threshold_configurations", "aqi_max", "REAL NOT NULL DEFAULT 2"),
-    # NEW (login): alerts are per user
     ("alerts", "user_id", "INTEGER REFERENCES users(id) ON DELETE CASCADE"),
+    # NEW: "deleting" an alert hides it from the user but keeps the row as history
+    ("alerts", "is_dismissed", "BOOLEAN NOT NULL DEFAULT 0"),
 ]
 
-# NEW (login): the config table from before accounts existed is kept under this
+# login: the config table from before accounts existed is kept under this
 # name instead of being deleted, so no profile anyone made is lost.
 LEGACY_CONFIG_TABLE = "threshold_configurations_legacy"
 
-# NEW (login): columns copied from a template into a new user's profile
+# columns copied from a template into a new user's profile
 PROFILE_COLUMNS = (
     "name, description, ph_min, ph_max, temp_min, temp_max, "
     "humidity_min, humidity_max, pressure_min, pressure_max, aqi_min, aqi_max, is_active"
@@ -63,10 +64,10 @@ class DatabaseManager:
                 with open(schema_path, "r") as f:
                     schema_sql = f.read()
 
-                # CHANGED (login): upgrade older DBs BEFORE running the schema.
+                # login: upgrade older DBs BEFORE running the schema.
                 # The schema now creates indexes on user_id columns, which would
                 # fail on an old table that doesn't have them yet.
-                await self._migrate_configurations_per_user(db)  # NEW
+                await self._migrate_configurations_per_user(db)  
                 await self._add_missing_columns(db)
 
                 await db.executescript(schema_sql)
@@ -132,7 +133,7 @@ class DatabaseManager:
         for table, column, definition in ADDED_COLUMNS:
             cursor = await db.execute(f"PRAGMA table_info({table})")
             existing = {row[1] for row in await cursor.fetchall()}
-            # CHANGED: now runs before the schema, so on a brand-new DB the table
+            # now runs before the schema, so on a brand-new DB the table
             # doesn't exist yet (empty result). The schema will create it complete.
             if not existing:
                 continue
@@ -183,11 +184,12 @@ class DatabaseManager:
             return  # already has the new constraint (or the table doesn't exist)
 
         await db.execute("ALTER TABLE alerts RENAME TO alerts_old")
+
         # The index keeps its name on the renamed table; drop it so the schema
         # can create it again on the new table
         await db.execute("DROP INDEX IF EXISTS idx_alerts_unread")
-        await db.execute("DROP INDEX IF EXISTS idx_alerts_user")  # NEW (login)
-        await db.executescript(schema_sql)  # every statement is IF NOT EXISTS / OR IGNORE
+        await db.execute("DROP INDEX IF EXISTS idx_alerts_user")  
+        await db.executescript(schema_sql)
         await db.execute(
             """
             INSERT INTO alerts
@@ -206,7 +208,7 @@ class DatabaseManager:
         await db.execute("DROP TABLE alerts_old")
         logger.info("Migrated: alert severity renamed to normal|warning|danger")
 
-    # ==================== SENSOR READINGS ====================
+    #  SENSOR READINGS 
 
     async def insert_sensor_reading(
         self, sensor_type: str, data: Dict[str, Any]
@@ -351,7 +353,7 @@ class DatabaseManager:
             logger.error(f"Error deleting old readings: {e}")
             return 0
 
-    # ==================== USERS & SESSIONS (NEW: login) ====================
+    # USERS & SESSIONS 
 
     async def create_user(self, name: str, email: str, password_hash: str) -> int:
         """
@@ -420,7 +422,7 @@ class DatabaseManager:
             await db.commit()
 
     # THRESHOLD CONFIGURATIONS
-    # CHANGED (login): every method takes the user_id it acts for, and only ever
+    #login: every method takes the user_id it acts for, and only ever
     # touches that user's rows. A profile id from another account behaves exactly
     # like an id that doesn't exist (404), so users can't probe each other's data.
 
@@ -725,7 +727,7 @@ class DatabaseManager:
             return False
 
     # ALERTS 
-    # CHANGED (login): each alert belongs to the user whose profile triggered it
+    # each alert belongs to the user whose profile triggered it
 
     async def create_alert(self, alert_data: Dict[str, Any]) -> int:
         """
@@ -784,7 +786,8 @@ class DatabaseManager:
         Returns:
             List of alerts
         """
-        query = "SELECT * FROM alerts WHERE user_id = ?"
+        # CHANGED: dismissed alerts stay in the table but are never returned
+        query = "SELECT * FROM alerts WHERE user_id = ? AND is_dismissed = 0"
         params: List[Any] = [user_id]
         if unread_only:
             query += " AND is_read = 0"
@@ -824,3 +827,48 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error marking alert as read: {e}")
             return False
+
+    async def dismiss_alert(self, alert_id: int, user_id: int) -> bool:
+        """
+        NEW: hide one of this user's alerts (False if not found/not theirs).
+        Errors are raised, so the route reports a 500 instead of a false 404.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "UPDATE alerts SET is_dismissed = 1 WHERE id = ? AND user_id = ?",
+                (alert_id, user_id),
+            )
+            await db.commit()
+            return cursor.rowcount > 0
+
+    async def dismiss_alerts(
+        self,
+        user_id: int,
+        severity: Optional[str] = None,
+        max_id: Optional[int] = None,
+    ) -> int:
+        """
+        NEW: hide all of this user's alerts, for "Clear all".
+
+        Args:
+            user_id: Whose alerts
+            severity: normal | warning | danger, to clear only that type
+            max_id: Skip alerts newer than this, so an alert raised after the
+                panel loaded can't be cleared before the user has seen it
+
+        Returns:
+            Number of alerts dismissed
+        """
+        query = "UPDATE alerts SET is_dismissed = 1 WHERE user_id = ? AND is_dismissed = 0"
+        params: List[Any] = [user_id]
+        if severity:
+            query += " AND severity = ?"
+            params.append(severity)
+        if max_id is not None:
+            query += " AND id <= ?"
+            params.append(max_id)
+
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(query, params)
+            await db.commit()
+            return cursor.rowcount
