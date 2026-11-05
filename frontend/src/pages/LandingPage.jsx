@@ -12,6 +12,7 @@ import closeIcon from "../assets/icons/close.png";
 import rightArrowIcon from "../assets/icons/right-arrow.png";
 
 import GlassBackground from "../components/GlassBackground.jsx";  
+import HeroImage from "../components/HeroImage.jsx";
 import "../styles/appearance.css";   
 import "../styles/LandingPage.css";
 
@@ -169,11 +170,7 @@ function LandingPage({ onLogin }) {
                 <div className="landing-image-container">
                     <div className="landing-image-glow"></div>
 
-                    <img
-                        src={hydroponicBg}
-                        alt="Smart Hydroponic Garden"
-                        className="landing-image"
-                    />
+                    <HeroImage src={hydroponicBg} alt="Smart Hydroponic Garden" />
                 </div>
 
             </main>

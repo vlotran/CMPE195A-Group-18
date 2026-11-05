@@ -236,29 +236,88 @@
     border-radius: 50%;
 }
 
-/* show the whole picture, whatever its size or shape  */
-.landing-image {
+/* The clickable frame around the picture. It floats, so the beam moves with it. */
+.landing-image-frame {
     position: relative;
 
     z-index: 1;
 
     display: block;
-    width: auto;
-    height: auto;
     max-width: 100%;
-    max-height: 70vh;
+    padding: 0;
 
+    border: none;
     border-radius: 30px;
+    background: none;
 
-    border:
-        1px solid
-        rgba(var(--fg-rgb), 0.1);
-    box-shadow: var(--landing-image-shadow);
+    cursor: zoom-in;
+
     animation:
         gardenFloat
         5s
         ease-in-out
         infinite;
+}
+.landing-image-frame:focus { outline: none; }
+
+/* The zoomed copy takes the picture's place, so it looks like the same one */
+.landing-image-frame.zoomed { visibility: hidden; }
+
+/* The frame has no border of its own, so the beam sits right on its edge */
+.landing-image-frame .member-beam {
+    inset: 0;
+    z-index: 2;
+}
+
+/* show the whole picture, whatever its size or shape  */
+.landing-image {
+    display: block;
+    box-sizing: border-box;   /* counts the border, so the frame and beam match its edge */
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 70vh;
+
+    border-radius: inherit;
+
+    border:
+        1px solid
+        rgba(var(--fg-rgb), 0.1);
+    box-shadow: var(--landing-image-shadow);
+}
+
+/* Full-screen zoom (HeroImage.jsx). Clicks outside the image close it. */
+.image-zoom {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: zoom-out;
+}
+.image-zoom:focus { outline: none; }
+
+.image-zoom-backdrop {
+    position: absolute;
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.image-zoom-img {
+    position: relative;
+
+    /* As large as fits on screen, keeping its shape */
+    width: min(95vw, calc(92vh * var(--image-ratio)));
+    height: auto;
+
+    border-radius: 16px;
+    transform-origin: top left;
+
+    cursor: default;
 }
 
 /* Black shadows disappear on the dark background, so dark adds an accent halo */
@@ -400,7 +459,7 @@
     background: repeating-conic-gradient(
         from var(--beam-angle),
         transparent 0 112deg,
-        rgba(var(--accent-rgb), 0.65) 151deg,
+        rgba(var(--accent-rgb), 0.8) 151deg,
         rgb(var(--beam-head)) 176deg,
         transparent 180deg
     );
@@ -418,11 +477,15 @@
 
 /* Links reached with the Tab key show it too */
 .landing-team-member:hover .member-beam,
-.landing-team-member:has(a:focus-visible) .member-beam {
+.landing-team-member:has(a:focus-visible) .member-beam,
+.landing-image-frame:hover .member-beam,
+.landing-image-frame:focus-visible .member-beam {
     opacity: 1;
 }
 .landing-team-member:hover .member-beam::before,
-.landing-team-member:has(a:focus-visible) .member-beam::before {
+.landing-team-member:has(a:focus-visible) .member-beam::before,
+.landing-image-frame:hover .member-beam::before,
+.landing-image-frame:focus-visible .member-beam::before {
     animation-play-state: running;
 }
 
@@ -951,7 +1014,7 @@
         font-size: 16px;
     }
 
-    .landing-image {
+    .landing-image-frame {
         border-radius: 20px;
     }
 
