@@ -29,25 +29,25 @@
     transition: --mx 0.25s ease-out, --my 0.25s ease-out;
 
     /* Light strength (tune here) */
-    --glow: 0.7;               /* light under the cursor */
+    --glow: 0.9;               /* light under the cursor */
     --orb-1: 0.35;              /* top-left orb */
     --orb-2: 0.25;              /* bottom-right orb */
-    --corner: 0.12;             /* fixed corner glow */
+    --corner: 0.2;             /* fixed corner glow */
 }
 
 /* Dashboard and landing page: dimmer, so content stays easy to read */
 .glass-bg--soft {
-    --glow: 0.3;
-    --orb-1: 0.16;
-    --orb-2: 0.12;
-    --corner: 0.06;
+    --glow: 0.55;
+    --orb-1: 0.35;
+    --orb-2: 0.4;
+    --corner: 0.1;
 }
 
 .glass-bg-light {
     position: absolute;
     inset: -120px;           
     overflow: hidden;
-    filter: blur(50px);
+    filter: blur(65px);
 
     background:
         radial-gradient(
