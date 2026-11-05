@@ -82,20 +82,24 @@ export function ThemeProvider({ children }) {
             flushSync(() => setTheme(next));
         });
 
+        // Light -> dark: the dark theme grows out from the cursor.
+        // Dark -> light: the reverse, the dark theme shrinks down into the cursor.
+        const small = `circle(0px at ${x}px ${y}px)`;
+        const large = `circle(${radius}px at ${x}px ${y}px)`;
+        const toDark = next === DARK;
+
         transition.ready.then(() => {
-            document.documentElement.animate(
-                {
-                    clipPath: [
-                        `circle(0px at ${x}px ${y}px)`,
-                        `circle(${radius}px at ${x}px ${y}px)`,
-                    ],
-                },
+            const reveal = document.documentElement.animate(
+                { clipPath: toDark ? [small, large] : [large, small] },
                 {
                     duration: REVEAL_MS,
                     easing: "ease-in-out",
-                    pseudoElement: "::view-transition-new(root)",
+                    fill: "forwards", 
+                    pseudoElement: toDark ? "::view-transition-new(root)" : "::view-transition-old(root)",
                 }
             );
+            // "forwards" keeps the animation around, and it would clip the next switch
+            transition.finished.finally(() => reveal.cancel());
         }).catch(() => {
             // A quick second click cancels this reveal
         });

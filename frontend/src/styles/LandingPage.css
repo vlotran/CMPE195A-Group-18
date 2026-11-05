@@ -223,18 +223,6 @@
     animation: landingSlideRight 0.1s ease;
 }
 
-.landing-image-glow {
-    position: absolute;
-
-    width: 80%;
-    height: 70%;
-    background:
-        rgba(var(--accent-rgb), 0.35);
-
-    filter: blur(80px);
-
-    border-radius: 50%;
-}
 
 /* The clickable frame around the picture. It floats, so the beam moves with it. */
 .landing-image-frame {
@@ -348,17 +336,17 @@
 
     color: var(--text);
 
-    font-size: 21px;
+    font-size: 18px;
 
     font-weight: 500;
 }
 
 .team-heading {
-    margin-bottom: 18px;
+    margin-bottom: 12px;
 
     color: var(--accent);
 
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 700;
 
     letter-spacing: 3px;
@@ -376,7 +364,7 @@
 
     flex-wrap: wrap;
 
-    gap: 16px;
+    gap: 14px;
 }
 
 .landing-team-member {
@@ -412,7 +400,7 @@
 }
 
 /* Border beam: on hover, a glowing line travels around the card's border.
-   Orange on dark, blue on light (--accent-rgb from theme.css).
+    Orange on dark, blue on light (--accent-rgb from theme.css).
    Tune here: --beam-speed for the speed, the drop-shadows for the glow size. */
 
 /* Registering the angle lets CSS animate it, which turns the gradient below */
@@ -527,7 +515,7 @@
 
     color: var(--text);
 
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 600;
 }
 
@@ -1138,7 +1126,7 @@
     color: var(--text);
 
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 800;
 }
 
 .team-links {
@@ -1152,7 +1140,7 @@
 .team-links span {
     color: rgba(var(--fg-rgb), 0.55);
 
-    font-size: 11px;
+    font-size: 14px;
 
     text-decoration: none;
 

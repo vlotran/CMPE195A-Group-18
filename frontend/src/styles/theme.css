@@ -80,5 +80,8 @@
     animation: none;
     mix-blend-mode: normal;
 }
-::view-transition-old(root) { z-index: 1; }
-::view-transition-new(root) { z-index: 2; }
+
+[data-theme="dark"]::view-transition-old(root),
+[data-theme="light"]::view-transition-new(root) { z-index: 1; }
+[data-theme="dark"]::view-transition-new(root),
+[data-theme="light"]::view-transition-old(root) { z-index: 2; }
