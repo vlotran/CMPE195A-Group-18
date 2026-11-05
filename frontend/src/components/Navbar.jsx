@@ -2,7 +2,7 @@
  * Navigation Bar
  *
  * CHANGED (layout): logo, tabs and account now share one row
- *  - Row 1: [Logo] [Dashboard | Settings | Appearance]          [Hi, User] [Log out]
+ *  - Row 1: [Logo] [Dashboard | Settings | Appearance] [Theme icon]          [Hi, User] [Log out]
  *  - Row 2: Controller name | <StatusIcon> online/offline | Last update: [time]
  *
  * The logo replaces the "Smart Hydroponic Gardening System" text and follows the
@@ -17,16 +17,19 @@
 import React from "react";
 import onlineIcon from "../assets/icons/online.png";
 import offlineIcon from "../assets/icons/offline.png";
+import darkModeIcon from "../assets/icons/darkmode.png";
+import lightModeIcon from "../assets/icons/lightmode.png";
 import logoLight from "../assets/Logo_light.png";
 import logoDark from "../assets/Logo_dark.png";
 import { useTheme, LIGHT } from "../contexts/ThemeContext.jsx";
-import TabBar from "./TabBar.jsx";                  // tabs live in the navbar now
+import TabBar from "./TabBar.jsx"; 
 import "../styles/navbar.css";
 
 function Navbar({ deviceName, status, activeTab, onTabChange, userName, onLogout }) {
   // pick the logo that matches the current theme
-  const { theme } = useTheme();
-  const logo = theme === LIGHT ? logoLight : logoDark;
+  const { theme, toggleTheme } = useTheme();
+  const lightMode = theme === LIGHT;
+  const logo = lightMode ? logoLight : logoDark;
 
   //Determine the status icon based on the connection status
   const statusIcon = status === "online" ? onlineIcon : offlineIcon;
@@ -58,7 +61,24 @@ function Navbar({ deviceName, status, activeTab, onTabChange, userName, onLogout
         </a>
 
         {onTabChange && (
-          <TabBar activeTab={activeTab} onTabChange={onTabChange} />
+          <div className="nav-tabs">
+            <TabBar activeTab={activeTab} onTabChange={onTabChange} />
+
+            {/* Icon-only theme switch. Same circle reveal as the Appearance page */}
+            <button
+              type="button"
+              className="nav-theme-toggle"
+              onClick={toggleTheme}
+              aria-label={lightMode ? "Switch to dark theme" : "Switch to light theme"}
+              title={lightMode ? "Switch to dark theme" : "Switch to light theme"}
+            >
+              <span
+                className="nav-theme-icon"
+                style={{ "--icon": `url(${lightMode ? lightModeIcon : darkModeIcon})` }}
+                aria-hidden="true"
+              />
+            </button>
+          </div>
         )}
 
         {onLogout && (
