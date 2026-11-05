@@ -1,7 +1,7 @@
 /**
  * Navigation Bar
  *
- * CHANGED (layout): logo, tabs and account now share one row
+ * LAYOUT:
  *  - Row 1: [Logo] [Dashboard | Settings | Appearance] [Theme icon]          [Hi, User] [Log out]
  *  - Row 2: Controller name | <StatusIcon> online/offline | Last update: [time]
  *
@@ -21,7 +21,7 @@ import darkModeIcon from "../assets/icons/darkmode.png";
 import lightModeIcon from "../assets/icons/lightmode.png";
 import logoLight from "../assets/Logo_light.png";
 import logoDark from "../assets/Logo_dark.png";
-import { useTheme, LIGHT } from "../contexts/ThemeContext.jsx";
+import { useTheme, LIGHT } from "../contexts/useTheme.js";
 import TabBar from "./TabBar.jsx"; 
 import "../styles/navbar.css";
 

@@ -16,7 +16,7 @@ import React from "react";
 import darkModeIcon from "../assets/icons/darkmode.png";
 import lightModeIcon from "../assets/icons/lightmode.png";
 import { useTempUnit } from "../contexts/TempUnitContext.jsx";
-import { useTheme, DARK } from "../contexts/ThemeContext.jsx";
+import { useTheme, DARK } from "../contexts/useTheme.js";
 import { CELSIUS, FAHRENHEIT } from "../utils/units.js";
 import "../styles/appearance.css";
 import "../styles/dashboardEnter.css"; 

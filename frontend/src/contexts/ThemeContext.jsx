@@ -8,20 +8,16 @@
  * toggleTheme(event) reveals the new theme in a circle that spreads from the
  * click (View Transitions API). The rest of the circle's styles are in theme.css
  * Browsers without that API, and "reduce motion", switch instantly
+ *
+ * Components read the theme with useTheme, from useTheme.js
  */
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { DARK, LIGHT, ThemeContext } from "./useTheme.js";
 
-export const DARK = "dark";
-export const LIGHT = "light";
 const STORAGE_KEY = "theme";
 const REVEAL_MS = 700;  
-const ThemeContext = createContext({
-    theme: DARK,
-    setTheme: () => {},
-    toggleTheme: () => {},
-});
 
 export function ThemeProvider({ children }) {
     const [theme, setTheme] = useState(() => {
@@ -80,7 +76,7 @@ export function ThemeProvider({ children }) {
             Math.max(y, window.innerHeight - y)
         );
 
-        // The browser snapshots the old theme, runs this, then shows the new theme live.
+        // The browser snapshots the old theme, runs this, then shows the new theme live
         const transition = document.startViewTransition(() => {
             document.documentElement.dataset.theme = next;
             flushSync(() => setTheme(next));
@@ -110,9 +106,4 @@ export function ThemeProvider({ children }) {
             {children}
         </ThemeContext.Provider>
     );
-}
-
-// The hook lives next to its Provider on purpose
-export function useTheme() {
-    return useContext(ThemeContext);
 }

@@ -7,7 +7,7 @@ import logoDark from "../assets/Logo_dark.png";
 import hydroponicBg from "../assets/hydroponic-bg.png";
 import darkModeIcon from "../assets/icons/darkmode.png";
 import lightModeIcon from "../assets/icons/lightmode.png";
-import { useTheme, DARK } from "../contexts/ThemeContext.jsx";
+import { useTheme, DARK } from "../contexts/useTheme.js";
 import closeIcon from "../assets/icons/close.png";
 import rightArrowIcon from "../assets/icons/right-arrow.png";
 
@@ -61,7 +61,7 @@ function LandingPage({ onLogin }) {
     };
 
     // CREATE ACCOUNT
-
+    
     // creates the account on the backend (POST /api/auth/register),
     // then opens Sign In with the email already filled in.
     
@@ -132,14 +132,12 @@ function LandingPage({ onLogin }) {
 
             {/* Hero */}
             <main className="landing-hero">
-
                 {/* Left side */}
                 <div className="landing-content">
 
                     <p className="landing-eyebrow">
                         CMPE-195B GROUP 18
                     </p>
-
                     <h1>
                         Smart Hydroponic.
                         <br />
@@ -150,7 +148,6 @@ function LandingPage({ onLogin }) {
                         Smart monitoring for your hydroponic garden.
                         Monitor water pH, air humidity, and air temperature in real time.
                     </p>
-
                     <button
                         className="get-started-button"
                         onClick={openLogin}
@@ -163,13 +160,11 @@ function LandingPage({ onLogin }) {
                             aria-hidden="true"
                         />
                     </button>
-
                 </div>
 
                 {/* Right side */}
                 <div className="landing-image-container">
                     <div className="landing-image-glow"></div>
-
                     <HeroImage src={hydroponicBg} alt="Smart Hydroponic Garden" />
                 </div>
 
@@ -186,18 +181,15 @@ function LandingPage({ onLogin }) {
                 </p>
 
                 <div className="landing-team">
-
                     <div className="landing-team-member team-member-detailed">
                         <span className="member-beam" aria-hidden="true" />
                         <div className="team-avatar">
                             H
                         </div>
-
                         <div className="team-info">
                             <p className="team-name">
                                 Hoa Tuong Minh Nguyen
                             </p>
-
                             <div className="team-links">
                                 <a
                                     href="https://github.com/MinhHoaNguyen"
@@ -206,11 +198,9 @@ function LandingPage({ onLogin }) {
                                 >
                                     GitHub: MinhHoaNguyen
                                 </a>
-
                                 <a href="mailto:hoatuongminh@gmail.com">
                                     Gmail: hoatuongminh@gmail.com
                                 </a>
-
                                 <a
                                     href="https://www.linkedin.com/in/hoa-nguyen-m1000/"
                                     target="_blank"
@@ -231,7 +221,6 @@ function LandingPage({ onLogin }) {
                         <p className="team-name">
                             Vy Lo Phuong Tran
                         </p>
-
                         <div className="team-links">
                             <a
                                 href="https://github.com/vlotran"
@@ -240,11 +229,9 @@ function LandingPage({ onLogin }) {
                             >
                                 GitHub: vlotran
                             </a>
-
                             <a href="mailto:vylophuong.tran@sjsu.edu">
                                 Email: vylophuong.tran@sjsu.edu
                             </a>
-
                             <a
                                 href="https://www.linkedin.com/in/vylotran"
                                 target="_blank"
@@ -263,7 +250,6 @@ function LandingPage({ onLogin }) {
 
                     <div className="team-info">
                         <p className="team-name">Thai Nguyen</p>
-
                         <div className="team-links">
                             <a
                                 href="https://github.com/thaiHnguyen"
@@ -272,11 +258,9 @@ function LandingPage({ onLogin }) {
                             >
                                 GitHub: thaiHnguyen
                             </a>
-
                             <a href="mailto:thai.nguyen02@sjsu.edu">
                                 Gmail: thai.nguyen02@sjsu.edu
                             </a>
-
                             <a href="https://linkedin.com/in/thaih-nguyen"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -287,22 +271,18 @@ function LandingPage({ onLogin }) {
                     </div>
                 </div>
             </div>
-
             </section>
 
             {/* Login Popup */}
             {showLogin && (
-
                 <div
                     className="login-overlay"
                     onClick={() => setShowLogin(false)}
                 >
-
                     <div
                         className="login-box"
                         onClick={(e) => e.stopPropagation()}
                     >
-
                         {/* Close */}
                         <button
                             type="button"
@@ -315,33 +295,27 @@ function LandingPage({ onLogin }) {
                                 style={{ "--icon": `url(${closeIcon})` }}
                             />
                         </button>
-
                         {/* Logo */}
                         <img
                             src={logo}
                             alt="Smart Hydroponic Garden System"
                             className="login-logo"
                         />
-
                         <h2>
                             Welcome Back
                         </h2>
-
                         <p className="login-subtitle">
                             Sign in to your HydroGarden
                         </p>
-
                         {/*"account created" message */}
                         {notice && (
                             <p className="login-notice" role="status">{notice}</p>
                         )}
 
                         <form onSubmit={handleSubmit}>
-
                             <label htmlFor="email">
                                 Email
                             </label>
-
                             <input
                                 id="email"
                                 name="email"
@@ -351,13 +325,11 @@ function LandingPage({ onLogin }) {
                                 autoComplete="email"
                                 required
                             />
-
                             <label htmlFor="password">
                                 Password
                             </label>
 
                             <div className="password-container">
-
                                 <input
                                     id="password"
                                     name="password"
@@ -380,32 +352,26 @@ function LandingPage({ onLogin }) {
                                 >
                                     {showPassword ? "Hide" : "Show"}
                                 </button>
-
                             </div>
 
                             <div className="login-options">
-
                                 {/* Checked: stay signed in for 6 hours, even after closing the browser.
                                     Unchecked: signed out when the browser closes. */}
                                 <label className="remember-me">
                                     <input type="checkbox" name="remember" />
                                     <span>Remember me</span>
                                 </label>
-
                                 <button
                                     type="button"
                                     className="forgot-password"
                                 >
                                     Forgot password?
                                 </button>
-
                             </div>
-
                             {/* error from the backend (e.g. wrong password) */}
                             {authError && (
                                 <p className="login-error" role="alert">{authError}</p>
                             )}
-
                             <button
                                 type="submit"
                                 className="login-submit"
@@ -413,15 +379,11 @@ function LandingPage({ onLogin }) {
                             >
                                 {busy ? "Signing in..." : "Sign In"}
                             </button>
-
                         </form>
 
                         {/* CREATE ACCOUNT LINK */}
-
                         <p className="create-account">
-
                             Don't have an account?{" "}
-
                             <button
                                 type="button"
                                 className="create-account-link"
@@ -429,24 +391,18 @@ function LandingPage({ onLogin }) {
                             >
                                 Create account
                             </button>
-
                         </p>
                     </div>
-
                 </div>
-
             )}
             {/*CREATE ACCOUNT POPUP*/}
-
             {showCreateAccount && (
-
                 <div
                     className="login-overlay"
                     onClick={() =>
                         setShowCreateAccount(false)
                     }
                 >
-
                     <div
                         className="login-box create-account-box"
                         onClick={(e) =>
@@ -455,7 +411,6 @@ function LandingPage({ onLogin }) {
                     >
 
                         {/* CLOSE */}
-
                         <button
                             type="button"
                             className="login-close"
@@ -470,38 +425,28 @@ function LandingPage({ onLogin }) {
                             />
                         </button>
 
-
                         {/* LOGO */}
-
                         <img
                             src={logo}
                             alt="Smart Hydroponic Garden System"
                             className="login-logo"
                         />
-
-
                         <h2>
                             Create Account
                         </h2>
-
 
                         <p className="login-subtitle">
                             Start growing smarter with HydroGarden.
                         </p>
 
-
                         {/* CREATE ACCOUNT FORM */}
-
                         <form
                             onSubmit={handleCreateAccount}
                         >
-
                             {/* FULL NAME */}
-
                             <label htmlFor="create-name">
                                 Full Name
                             </label>
-
                             <input
                                 id="create-name"
                                 name="name"
@@ -512,13 +457,10 @@ function LandingPage({ onLogin }) {
                                 required
                             />
 
-
                             {/* EMAIL */}
-
                             <label htmlFor="create-email">
                                 Email
                             </label>
-
                             <input
                                 id="create-email"
                                 name="email"
@@ -528,15 +470,11 @@ function LandingPage({ onLogin }) {
                                 required
                             />
 
-
                             {/* PASSWORD */}
-
                             <label htmlFor="create-password">
                                 Password
                             </label>
-
                             <div className="password-container">
-
                                 <input
                                     id="create-password"
                                     name="password"
@@ -551,7 +489,6 @@ function LandingPage({ onLogin }) {
                                     required
                                 />
 
-
                                 <button
                                     type="button"
                                     className="password-toggle"
@@ -563,16 +500,12 @@ function LandingPage({ onLogin }) {
                                         ? "Hide"
                                         : "Show"}
                                 </button>
-
                             </div>
 
-
                             {/* CONFIRM PASSWORD */}
-
                             <label htmlFor="confirm-password">
                                 Confirm Password
                             </label>
-
                             <input
                                 id="confirm-password"
                                 name="confirmPassword"
@@ -582,25 +515,18 @@ function LandingPage({ onLogin }) {
                                 required
                             />
 
-
                             {/* TERMS */}
-
                             <label className="terms-checkbox">
-
                                 <input
                                     type="checkbox"
                                     required
                                 />
-
                                 <span>
                                     I agree to the Terms & Conditions
                                 </span>
-
                             </label>
 
-
                             {/* CREATE ACCOUNT */}
-
                             {/* error from the backend (email already used) */}
                             {authError && (
                                 <p className="login-error" role="alert">{authError}</p>
@@ -613,16 +539,11 @@ function LandingPage({ onLogin }) {
                             >
                                 {busy ? "Creating account..." : "Create Account"}
                             </button>
-
                         </form>
 
-
                         {/* BACK TO SIGN IN */}
-
                         <p className="create-account">
-
                             Already have an account?{" "}
-
                             <button
                                 type="button"
                                 className="create-account-link"
@@ -630,17 +551,11 @@ function LandingPage({ onLogin }) {
                             >
                                 Sign In
                             </button>
-
                         </p>
-
                     </div>
-
                 </div>
-
             )}
-
         </div>
     );
 }
-
 export default LandingPage;
