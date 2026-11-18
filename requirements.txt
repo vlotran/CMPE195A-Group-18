@@ -14,6 +14,7 @@ APScheduler==3.11.2
 
 # Utilities
 python-dotenv==1.2.2
+email-validator==2.3.0  
 loguru==0.7.3
 
 # Testing
