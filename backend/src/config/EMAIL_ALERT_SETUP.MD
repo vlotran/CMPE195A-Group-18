@@ -2,9 +2,9 @@
 
 ## What changed
 - **DANGER alerts are emailed.** When a reading reaches DANGER on a user's active profile, that user gets an email. WARNING and back-to-normal alerts stay in the dashboard only.
-- **Sign-up checks the email domain.** Domains that can't receive mail, such as `example.com` or `gmail.con`, are rejected. Existing accounts can still log in
+- **Sign-up checks the email domain.** Domains that can't receive mail, such as `example.com` or `gmail.con`, are rejected. Existing accounts can still log in.
 
-Email stays off until `SMTP_USERNAME` is set in `.env`
+Email stays off until `SMTP_USERNAME` is set in `.env`.
 
 ## What to do on the Pi
 Run these from the repo root. `venv/bin/python` is the backend's virtualenv; use `.venv/bin/python` if that's what the Pi has.
@@ -18,17 +18,26 @@ venv/bin/python -m pip install -r requirements.txt
 
 > **Do this before editing `.env`.** Older code rejects keys it doesn't know, so the backend won't start and logs `Extra inputs are not permitted`.
 
-### 2. Create the sender account
-1. Create a Gmail account just for this project. Don't use a personal account.
-2. Turn on 2-Step Verification.
-3. Create an App Password in the Google account settings and copy it without spaces.
+### 2. Set up the sender (Brevo)
+We send through Brevo's free plan (300 emails a day). Gmail App Passwords were blocked on our new project account.
+
+1. Sign up at brevo.com with the project Gmail account.
+2. Go to **Settings > Senders & IP**, add the project Gmail as a sender, and click the confirmation link Brevo emails to it.
+3. Go to **Settings > SMTP & API > SMTP** and note the **login**. Then create an **SMTP key** and copy it. Brevo shows it only once. The SMTP key is not the API key.
 
 ### 3. Add the settings
 Add to `.env` in the **repo root**:
 ```
-SMTP_USERNAME=yourproject@gmail.com
-SMTP_PASSWORD=yourapppasswordnospaces
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USERNAME=the-login-from-brevo
+SMTP_PASSWORD=the-smtp-key-from-brevo
+SMTP_FROM=yourproject@gmail.com
 ```
+`SMTP_FROM` must be the sender you verified in step 2.
+
+Using Gmail instead (if its App Password works): set `SMTP_HOST=smtp.gmail.com`, put the Gmail address and App Password in `SMTP_USERNAME` and `SMTP_PASSWORD`, and leave out `SMTP_FROM`.
+
 Then lock the file. Run this as the user that runs the backend:
 ```bash
 chmod 600 .env
@@ -37,7 +46,7 @@ chmod 600 .env
 Never commit `.env` or paste the password into chat, code or screenshots.
 
 ### 4. Remove fake accounts
-Alerts sent to accounts like `@example.com` bounce back to the project Gmail. **This permanently deletes those users and their profiles and alerts**, so back up first and check the list.
+Alerts sent to accounts like `@example.com` bounce, and too many bounces can get the Brevo account limited. **This permanently deletes those users and their profiles and alerts**, so back up first and check the list.
 ```bash
 sudo systemctl stop hydroponic
 cp data/hydroponic.db data/hydroponic-before-email.db
@@ -73,19 +82,21 @@ Watch the log with `sudo journalctl -u hydroponic -f`.
 | What you see | Likely cause | Fix |
 |---|---|---|
 | Backend won't start, `Extra inputs are not permitted` | New `.env` keys with old code | Deploy the code, or remove the keys |
-| `Username and Password not accepted` | Wrong password, or the normal Gmail password was used | Create a new App Password and restart |
+| `Authentication failed` or `Username and Password not accepted` | Wrong login, or the API key was used instead of the SMTP key | Copy both again from Settings > SMTP & API and restart |
+| Mail rejected for the sender | `SMTP_FROM` isn't a verified Brevo sender | Verify it in Settings > Senders & IP |
 | Test prints `False` with no error | `SMTP_USERNAME` isn't set, or `.env` isn't in the repo root | Check `.env` |
 | Timeout or connection error | The network may block port 587 | Try another network, such as a phone hotspot |
-| `Alert email sent` in the log, but nothing arrives | Spam filter | Check spam, especially on school accounts |
+| `Alert email sent` in the log, but nothing arrives | Spam filter. A Gmail sender sent through Brevo is more likely to be filtered | Check spam, especially on school accounts. Check the Brevo logs under Transactional |
 
 ## Turning it off
 Remove `SMTP_USERNAME` from `.env` and restart. Alerts still appear in the dashboard.
 
-Before rolling back to code older than this feature, also remove `SMTP_USERNAME` and `SMTP_PASSWORD`, or the old code won't start.
+Before rolling back to code older than this feature, also remove all `SMTP_` lines, or the old code won't start.
 
-If the password may have leaked, delete it in the Google account's App Passwords page, create a new one and restart.
+If the SMTP key may have leaked, delete it in Brevo under Settings > SMTP & API, create a new one and restart.
 
 ## Known limits
 - The check confirms the domain receives mail, not that the mailbox exists or belongs to the person signing up.
 - Sign-up has no email confirmation or rate limit, so don't treat this as ready for public use.
+- The free Brevo plan allows 300 emails a day, shared by everyone.
 - One incident can send two emails, because the BME280 and BME680 both report temperature and humidity.

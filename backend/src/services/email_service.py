@@ -1,5 +1,5 @@
 """
-Send email through an SMTP account (e.g. a Gmail account with an App Password).
+Send email through an SMTP account (using Brevo for now)
 Uses only the Python standard library. Settings come from .env
 """
 
@@ -13,9 +13,12 @@ from backend.src.utils.logger import logger
 
 
 def _send(to: str, subject: str, body: str) -> None:
-    """Blocking send: connect, encrypt, log in, deliver to the SMTP server."""
+    """Blocking send: connect, encrypt, log in, deliver to the SMTP server"""
     msg = EmailMessage()
-    msg["From"] = f"{settings.app_name} <{settings.smtp_username}>"
+
+    sender = settings.smtp_from or settings.smtp_username
+
+    msg["From"] = f"{settings.app_name} <{sender}>"
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(body)
