@@ -13,7 +13,7 @@ from backend.src.utils.logger import logger
 
 # columns added after the first release. `CREATE TABLE IF NOT EXISTS` skips
 # tables that already exist, so a DB created before this change (e.g. on the Pi)
-# would never get them. initialize() adds any that are missing.
+# would never get them. initialize() adds any that are missing
 # (table, column, column definition)
 ADDED_COLUMNS = [
     ("sensor_readings", "aqi_score", "INTEGER"),
@@ -376,6 +376,13 @@ class DatabaseManager:
             cursor = await db.execute("SELECT * FROM users WHERE email = ?", (email,))
             row = await cursor.fetchone()
             return dict(row) if row else None
+
+    async def get_user_email(self, user_id: int) -> Optional[str]:
+        """Where to send this user's alert emails. None if the user is gone."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("SELECT email FROM users WHERE id = ?", (user_id,))
+            row = await cursor.fetchone()
+            return row[0] if row else None
 
     async def create_session(
         self, token_hash: str, user_id: int, ttl_hours: float
