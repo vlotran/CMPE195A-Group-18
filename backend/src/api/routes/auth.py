@@ -12,13 +12,16 @@ Other routes protect themselves with `Depends(get_current_user)`.
 The browser sends the token as:  Authorization: Bearer <token>
 """
 
+import asyncio
 import re
 
 import aiosqlite
+from email_validator import EmailNotValidError, validate_email
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field, field_validator
 
+from backend.src.config.settings import settings
 from backend.src.services import auth
 from backend.src.services.data_collector import data_collector
 from backend.src.storage import db_manager
@@ -115,14 +118,40 @@ async def get_optional_user(
     return await db_manager.get_session_user(auth.hash_token(creds.credentials))
 
 
+# HELPERS
+
+async def _require_mail_domain(email: str) -> None:
+    """
+    422 if the email's domain can't receive mail (typos like gmail.con, or
+    example.com, which publishes "no mail here" in DNS)
+
+    Runs in a thread because the DNS lookup blocks, and blocking the event loop
+    would pause the sensor loop too. 
+    
+    If DNS itself is unreachable the library
+    lets the address through, so an internet blip doesn't stop sign-ups
+    """
+    if not settings.check_email_domain:
+        return
+    try:
+        await asyncio.to_thread(validate_email, email, check_deliverability=True)
+    except EmailNotValidError:
+        raise HTTPException(
+            status_code=422,
+            detail="This email domain can't receive mail. Please check the address.",
+        )
+
+
 # ROUTES 
 
 @router.post("/register", status_code=201, response_model=UserOut)
 async def register(body: RegisterRequest):
     """
     Create an account. The new user starts with their own copy of every
-    example threshold profile; what they add or delete later only affects them.
+    example threshold profile; what they add or delete later only affects them
     """
+    await _require_mail_domain(body.email)
+
     try:
         user_id = await db_manager.create_user(
             body.name, body.email, auth.hash_password(body.password)
