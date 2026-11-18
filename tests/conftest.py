@@ -9,3 +9,4 @@ from backend.src.config.settings import settings
 def offline(monkeypatch):
     monkeypatch.setattr(settings, "check_email_domain", False)
     monkeypatch.setattr(settings, "smtp_username", "")
+    monkeypatch.setattr(settings, "smtp_from", "")

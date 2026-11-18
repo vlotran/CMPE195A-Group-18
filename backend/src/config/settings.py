@@ -50,7 +50,10 @@ class Settings(BaseSettings):
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
     smtp_username: str = ""
-    smtp_password: str = ""  # Gmail: an App Password, not the account password
+    smtp_password: str = ""  # Gmail: an App Password. Brevo: the SMTP key
+    # Address alerts come from. Empty = smtp_username (right for Gmail; Brevo's
+    # login is not an address people can reply to, so set this for Brevo)
+    smtp_from: str = ""
 
     # CORS
     allowed_origins: str = "*"

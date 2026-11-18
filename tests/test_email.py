@@ -88,6 +88,29 @@ def test_send_uses_tls_login_and_builds_the_message(monkeypatch):
     assert calls[-1][1:3] == ("ana@gmail.com", "Hi")
 
 
+@pytest.mark.parametrize("smtp_from, expected", [
+    ("", "pi@gmail.com"),                     
+    ("alerts@gmail.com", "alerts@gmail.com"),  # Brevo: separate sender
+])
+def test_from_address(monkeypatch, smtp_from, expected):
+    sent = []
+
+    class FakeSMTP:
+        def __init__(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *exc): return False
+        def starttls(self, context): pass
+        def login(self, user, password): pass
+        def send_message(self, msg): sent.append(msg["From"])
+
+    monkeypatch.setattr(email_service.smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setattr(settings, "smtp_username", "pi@gmail.com")
+    monkeypatch.setattr(settings, "smtp_from", smtp_from)
+
+    asyncio.run(email_service.send_email("a@b.com", "s", "b"))
+    assert expected in sent[0]
+
+
 def test_email_is_off_without_smtp_username(monkeypatch):
     monkeypatch.setattr(email_service, "_send", lambda *a: pytest.fail("must not send"))
     assert asyncio.run(email_service.send_email("a@b.com", "s", "b")) is False
