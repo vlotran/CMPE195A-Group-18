@@ -199,7 +199,7 @@ def test_alerts_follow_each_users_own_profile(client):
     ana = login(client, email="ana@example.com")
     bob = login(client, email="bob@example.com")
 
-    # Ana: 20-25 C (Standard). Bob: widen to 0-50C so 40 C is normal for him.
+    # Ana: 20-25 C (Standard). Bob: widen to 0-50C so 40 C is normal for him
     bob_active = client.get("/api/configurations/active", headers=bob).json()
     client.patch(f"/api/configurations/{bob_active['id']}", json={"temp_min": 0, "temp_max": 50}, headers=bob)
 
@@ -216,3 +216,70 @@ def test_alerts_follow_each_users_own_profile(client):
     # Bob can't mark Ana's alert as read
     assert client.patch(f"/api/alerts/{ana_alerts[0]['id']}/read", headers=bob).status_code == 404
     assert client.patch(f"/api/alerts/{ana_alerts[0]['id']}/read", headers=ana).status_code == 200
+
+
+# DELETE ACCOUNT
+
+def delete_me(client, headers, password=PASSWORD):
+    """DELETE with a JSON body (TestClient.delete() can't send one)."""
+    return client.request("DELETE", "/api/auth/me", headers=headers, json={"password": password})
+
+
+def test_delete_account_removes_the_user_and_everything_they_own(client):
+    ana = login(client, "ana@example.com")
+    bob = login(client, "bob@example.com")
+    ana_id = client.get("/api/auth/me", headers=ana).json()["id"]
+    asyncio.run(db_manager.create_alert({
+        "user_id": ana_id, "alert_type": "threshold_breach",
+        "message": "x", "severity": "warning",
+    }))
+
+    res = delete_me(client, ana)
+    assert res.status_code == 200
+
+    # The token stops working right away
+    assert client.get("/api/auth/me", headers=ana).status_code == 401
+
+    # Nothing of Ana's is left behind
+    import sqlite3
+    with sqlite3.connect(db_manager.db_path) as db:
+        for table in ("users", "sessions", "threshold_configurations", "alerts"):
+            column = "id" if table == "users" else "user_id"
+            left = db.execute(f"SELECT COUNT(*) FROM {table} WHERE {column} = ?", (ana_id,)).fetchone()[0]
+            assert left == 0, table
+        # Example profiles (templates) are shared and stay
+        assert db.execute(
+            "SELECT COUNT(*) FROM threshold_configurations WHERE user_id IS NULL"
+        ).fetchone()[0] > 0
+
+    # Other users are untouched
+    assert client.get("/api/auth/me", headers=bob).status_code == 200
+    assert client.get("/api/configurations/", headers=bob).json()
+
+
+def test_deleted_email_can_sign_up_again(client):
+    headers = login(client, "ana@example.com")
+    delete_me(client, headers)
+    assert register(client, "ana@example.com").status_code == 201
+
+
+def test_delete_account_needs_login(client):
+    assert client.request("DELETE", "/api/auth/me", json={"password": PASSWORD}).status_code == 401
+
+
+def test_delete_account_with_wrong_password_keeps_everything(client):
+    headers = login(client, "ana@example.com")
+
+    res = delete_me(client, headers, password="wrong-password")
+
+    # 403 (not 401) so the browser doesn't treat it as "logged out"
+    assert res.status_code == 403
+    assert res.json()["detail"] == "Incorrect password"
+    assert client.get("/api/auth/me", headers=headers).status_code == 200
+    assert client.get("/api/configurations/", headers=headers).json()
+
+
+def test_delete_account_needs_a_password(client):
+    headers = login(client, "ana@example.com")
+    assert client.request("DELETE", "/api/auth/me", headers=headers).status_code == 422
+    assert client.get("/api/auth/me", headers=headers).status_code == 200
