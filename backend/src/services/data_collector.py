@@ -15,6 +15,7 @@ from backend.src.utils.logger import logger
 from backend.src.services.alert_evaluator import AlertEvaluator, AlertState, METRIC_BOUNDS
 from backend.src.services.actuator_controller import observe_environment
 from backend.src.services.actuator_manager import actuator_manager
+from backend.src.services.email_service import send_email
 
 
 # Evaluator state -> DB severity. CHANGED: the DB now uses the same names as the
@@ -40,6 +41,15 @@ METRIC_UNITS = {
 METRIC_SENSORS = {
     "pressure": {"bme680"},
     "aqi_score": {"bme680"},
+}
+
+# Same names the dashboard shows (frontend/src/utils/alerts.js)
+METRIC_LABELS = {
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "ph": "pH",
+    "pressure": "Air Pressure",
+    "aqi_score": "Air Quality",
 }
 
 def _c_to_f(c: float) -> float:
@@ -91,6 +101,9 @@ class DataCollector:
         self._warned_no_config = False # log the no-users case once
         self._warned_no_actuator_profile = False
         self._warned_invalid_actuator_readings = False
+        # Running email sends. asyncio only keeps weak references to tasks, so
+        # without this a send could be garbage-collected halfway through.
+        self._email_tasks: set[asyncio.Task] = set()
         
     async def start(self):
         """Start background data collection"""
@@ -346,6 +359,33 @@ class DataCollector:
         if t.should_notify:
             # TODO(Phase 4): web push
             logger.warning(f"DANGER: {message}")
+            
+            # In the background: slow SMTP must not delay the next sensor reading
+            if settings.smtp_username:
+                task = asyncio.create_task(self._email_danger_alert(t, user_id))
+                self._email_tasks.add(task)
+                task.add_done_callback(self._email_tasks.discard)
+
+    async def _email_danger_alert(self, t, user_id: int):
+        """Email the alert to the user who owns the profile. Never raises."""
+        try:
+            to = await db_manager.get_user_email(user_id)
+            if to is None:
+                return
+
+            label = METRIC_LABELS.get(t.metric, t.metric)
+            # pH is its own sensor, so "pH (PH)" would be redundant
+            who = label if t.sensor_type == t.metric else f"{label} ({t.sensor_type.upper()})"
+            subject = f"DANGER: {label} out of range"
+            body = (
+                f"{who} is DANGER: "
+                f"{_fmt_value(t.metric, t.value)}\n"
+                f"Your range: {_fmt_range(t.metric, t.threshold_min, t.threshold_max)}\n\n"
+                "Please check your garden.\n"
+            )
+            await send_email(to, subject, body)
+        except Exception as e:
+            logger.error(f"Could not email alert to user {user_id}: {e}")
 
 # Singleton instance
 data_collector = DataCollector()
