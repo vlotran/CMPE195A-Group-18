@@ -8,9 +8,9 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional
 
-# Repo root = backend/src/config/settings.py -> up 3 levels.
+# Repo root = backend/src/config/settings.py -> up 3 levels
 # Loading .env by absolute path fixes the bug where settings silently fell back
-# to defaults when the backend was started from a different working directory.
+# to defaults when the backend was started from a different working directory
 ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
 
 
@@ -34,14 +34,23 @@ class Settings(BaseSettings):
     sensor_read_interval: int = 30  # seconds
 
     # Actuator observation is opt-in per user profile. GPIO remains disabled
-    # until explicitly enabled on the Raspberry Pi's repo-root .env.
+    # until explicitly enabled on the Raspberry Pi's repo-root .env
     actuator_profile_user_id: Optional[int] = None
     actuator_hardware_enabled: bool = False
 
     # Controller identity 
     # Name shown in the frontend navbar. Override with CONTROLLER_NAME in .env;
-    # otherwise falls back to the Pi's hostname (e.g. "raspberrypi").
+    # otherwise falls back to the Pi's hostname (e.g. "raspberrypi")
     controller_name: str = socket.gethostname()
+
+    # Sign-up: reject email domains that can't receive mail (DNS lookup)
+    check_email_domain: bool = True
+
+    # Email alerts. Leave smtp_username empty to turn email off
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""  # Gmail: an App Password, not the account password
 
     # CORS
     allowed_origins: str = "*"
