@@ -1,5 +1,5 @@
 /**
- * AccountDeletedDialog Component (NEW)
+ * AccountDeletedDialog Component
  *
  * Popup shown after the account was deleted. Fades in and slides up as the
  * "Are you sure?" popup finishes fading out. OK leads to the landing page.
@@ -11,12 +11,11 @@
  */
 import React from "react";
 import "../styles/confirmDialog.css";
-import "../styles/settings.css";              // .btn-create for the OK button
+import "../styles/settings.css";              
 import "../styles/deleteAccountDialog.css";
 
 function AccountDeletedDialog({ onOk }) {
     return (
-        // no-fade: the backdrop takes over from the previous popup's backdrop
         <div className="confirm-overlay no-fade">
             <div
                 className="confirm-box account-deleted-box"

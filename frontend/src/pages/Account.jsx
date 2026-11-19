@@ -1,5 +1,5 @@
 /**
- * Account Page (NEW)
+ * Account Page 
  *
  * Shows who is signed in and the account actions:
  *  - Name
@@ -52,7 +52,7 @@ function Account({ user, onAccountDeleted }) {
                 </div>
             </div>
 
-            {/* Row 3: Reset Password on the left, Delete Account on the right */}
+            {/* Row 3: Reset Password next to Delete Account, on the right */}
             <div className="account-actions">
                 <button type="button" className="btn-create" onClick={handleResetPassword}>
                     Reset Password

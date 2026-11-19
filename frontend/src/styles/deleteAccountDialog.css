@@ -103,7 +103,7 @@
 }
 
 /* index.css rings every focused button. The OK button is focused on purpose
-   (Enter closes the popup), so only show the ring for keyboard users,
+    (Enter closes the popup), so only show the ring for keyboard users,
    like .nav-logout does */
 .account-deleted-box .btn-create:focus { outline: none; }
 .account-deleted-box .btn-create:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

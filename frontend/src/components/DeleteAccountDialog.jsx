@@ -15,8 +15,8 @@
  */
 import React, { useState } from "react";
 import { deleteAccount } from "../services/api.js";
-import "../styles/confirmDialog.css";        // .confirm-overlay, .confirm-box, ...
-import "../styles/profileModal.css";         // .btn-cancel
+import "../styles/confirmDialog.css";       
+import "../styles/profileModal.css";
 import "../styles/deleteAccountDialog.css";
 
 function DeleteAccountDialog({ onCancel, onDeleted }) {
@@ -24,7 +24,7 @@ function DeleteAccountDialog({ onCancel, onDeleted }) {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
-    const [closing, setClosing] = useState(false);   // true while fading out
+    const [closing, setClosing] = useState(false);  
 
     const handleSubmit = async (e) => {
         e.preventDefault();             // a form, so Enter in the box also submits
@@ -35,7 +35,7 @@ function DeleteAccountDialog({ onCancel, onDeleted }) {
             await deleteAccount(password);
             setClosing(true);           // onAnimationEnd below continues from here
         } catch (err) {
-            setError(err.message);      // e.g. "Incorrect password"
+            setError(err.message);    
             setBusy(false);
         }
     };

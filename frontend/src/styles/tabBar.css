@@ -1,6 +1,6 @@
 /*
  * Tabs now sit inside the Navbar, next to the logo.
- * CHANGED (style): underline tabs like the reference design:
+ *  underline tabs like the reference design:
  *  - inactive: muted text, no background
  *  - hover: normal text color
  *  - active: accent text + accent underline
@@ -70,7 +70,7 @@
     .tab-btn { padding: 10px 10px; }
 }
 
-/* NEW: four tabs (Account added). On small phones tighten them so the tabs
+/* Account added. On small phones tighten them so the tabs
    and the theme button still fit on one row */
 @media (max-width: 480px) {
     .tab-bar { gap: 0; }

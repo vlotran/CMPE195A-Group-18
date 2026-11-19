@@ -4,11 +4,10 @@
     padding: 24px 0;
 }
 
+/* uses the same default heading style as
+   .appearance-title, so both page headers match */
 .account-title {
-    font-size: 1.1rem;
-    font-weight: 600;
     color: var(--text);
-    margin: 0 0 16px 0;
 }
 
 /* One row per detail: label on the left, value (+ button) on the right */
@@ -42,10 +41,10 @@
     min-width: 0;
 }
 
-/* Reset Password on the left, Delete Account on the right, under the rows */
+/* Reset Password next to Delete Account, on the right under the rows */
 .account-actions {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 12px;
     margin-top: 8px;
 }
