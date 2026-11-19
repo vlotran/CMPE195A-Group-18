@@ -1,8 +1,8 @@
 /**
- * Tab switcher to switch between Dashboard, Settings and Appearance
+ * Tab switcher to switch between Dashboard, Settings, Appearance and Account
  * 
  * Props:
- *  - activeTab: "dashboard" | "settings" | "appearance"
+ *  - activeTab: "dashboard" | "settings" | "appearance" | "account"
  *  - onTabChange: function(tabName)
  */
 
@@ -34,6 +34,14 @@ function TabBar({ activeTab, onTabChange }) {
                 onClick={() => onTabChange("appearance")}
             >
                 Appearance
+            </button>
+
+            {/* NEW: Account Tab - name, email, password, delete account */}
+            <button
+                className={`tab-btn ${activeTab === "account" ? "active" : ""}`}
+                onClick={() => onTabChange("account")}
+            >
+                Account
             </button>
         </nav>
     );

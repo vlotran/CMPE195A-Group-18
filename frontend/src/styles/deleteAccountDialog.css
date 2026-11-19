@@ -1,0 +1,117 @@
+/* Styling for DeleteAccountDialog.jsx and AccountDeletedDialog.jsx.
+   The overlay and box come from confirmDialog.css */
+
+.delete-account-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: rgba(var(--fg-rgb), 0.75);
+    text-align: left;
+}
+
+/* Password box with the Show/Hide password text inside it, on the right
+   (same idea as the sign-in form) */
+.delete-account-password {
+    position: relative;
+}
+.delete-account-password input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 120px 12px 12px;      /* room on the right for the toggle */
+    border: 1px solid rgba(var(--fg-rgb), 0.12);
+    border-radius: 10px;
+    outline: none;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+.delete-account-password input:focus {
+    border-color: var(--accent);
+}
+.delete-account-password input[aria-invalid="true"] {
+    border-color: red;
+}
+.delete-account-toggle {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.delete-account-error {
+    margin: 8px 0 0 0;
+    font-size: 0.82rem;
+    color: red;
+    text-align: left;
+}
+
+/* Yes / No in the middle */
+.delete-account-actions {
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Yes stays dim until a password is typed */
+.btn-confirm-delete:disabled,
+.btn-cancel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: none;
+}
+
+/* Step 1: "Are you sure?" fades out after a successful delete */
+.delete-account-box.is-closing {
+    animation: deleteDialogFadeOut 0.2s ease forwards;
+}
+@keyframes deleteDialogFadeOut {
+    to { opacity: 0; transform: scale(0.97); }
+}
+
+/* Step 2: "deleted" popup fades in and slides up */
+.confirm-overlay.no-fade {
+    animation: none;
+}
+.account-deleted-box {
+    border-color: var(--ok);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    animation: deletedFadeInUp 0.35s ease;
+}
+.account-deleted-title {
+    color: var(--ok);
+    margin: 4px 0 0 0;
+}
+.account-deleted-box .btn-create {
+    padding: 8px 28px;
+}
+@keyframes deletedFadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Respect "reduce motion": no slide, just appear */
+@media (prefers-reduced-motion: reduce) {
+    .account-deleted-box { animation: none; }
+    .delete-account-box.is-closing { animation-duration: 0.01s; }
+}
+
+/* index.css rings every focused button. The OK button is focused on purpose
+   (Enter closes the popup), so only show the ring for keyboard users,
+   like .nav-logout does */
+.account-deleted-box .btn-create:focus { outline: none; }
+.account-deleted-box .btn-create:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Keep a gap at the screen edges on phones: count padding inside the
+   90vw limit (confirm-box adds it on top). Desktop size stays the same */
+.delete-account-box,
+.account-deleted-box {
+    box-sizing: border-box;
+    width: 428px;
+}

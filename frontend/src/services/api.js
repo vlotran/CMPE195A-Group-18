@@ -126,6 +126,20 @@ export async function logoutUser() {
     }
 }
 
+/**
+ * DELETE /api/auth/me: delete this account and everything it owns.
+ * Needs the account password again. A wrong password throws "Incorrect password"
+ * (403) and the user stays logged in. The token is forgotten only after the
+ * backend confirms the delete.
+ */
+export async function deleteAccount(password) {
+    await fetchJSON("/api/auth/me", {
+        method: "DELETE",
+        body: JSON.stringify({ password }),
+    });
+    clearToken();
+}
+
 /** GET /api/auth/me: who is logged in (throws if the saved token is invalid) */
 export async function fetchCurrentUser() {
     return fetchJSON("/api/auth/me");

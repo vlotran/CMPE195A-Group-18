@@ -14,6 +14,8 @@ import Navbar from "./components/Navbar.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Settings from "./pages/Settings.jsx";
 import Appearance from "./pages/Appearance.jsx";
+import Account from "./pages/Account.jsx";
+import AccountDeletedDialog from "./components/AccountDeletedDialog.jsx";
 import AlertModal from "./components/AlertModal.jsx";
 import AlertPanel from "./components/AlertPanel.jsx"; 
 import LandingPage from "./pages/LandingPage.jsx";
@@ -37,6 +39,8 @@ function App() {
     // Only "checking" when there is a saved token to verify; avoids flashing
     // the landing page for a remembered user
     const [checking, setChecking] = useState(() => Boolean(getToken()));
+    // NEW: true right after the account was deleted -> show the "deleted" popup
+    const [accountDeleted, setAccountDeleted] = useState(false);
 
     // Restore a saved login once, on first load
     useEffect(() => {
@@ -63,6 +67,12 @@ function App() {
         setUser(null);
     };
 
+    // "OK" on the "deleted" popup -> back to the landing page
+    const handleDeletedOk = () => {
+        setAccountDeleted(false);
+        setUser(null);
+    };
+
     if (checking) {
         return <p className="dashboard">Loading...</p>;
     }
@@ -77,7 +87,16 @@ function App() {
         // The big rounded widget: holds the glass and every signed-in page
         <div className="app-shell">
                 <GlassBackground soft />
-                <AuthedApp key={user.id} user={user} onLogout={handleLogout} />
+                <AuthedApp
+                    key={user.id}
+                    user={user}
+                    onLogout={handleLogout}
+                    onAccountDeleted={() => setAccountDeleted(true)}
+                />
+                {/* Shown here (not in the Account page) so it stays put while the
+                    dashboard behind it re-renders. Its backdrop blocks clicks on the
+                    deleted account's dashboard until OK is pressed. */}
+                {accountDeleted && <AccountDeletedDialog onOk={handleDeletedOk} />}
         </div>
     );
 }
@@ -86,7 +105,7 @@ function App() {
  * The dashboard for a signed-in user.
  * this was the body of App; it now only mounts after login.
  */
-function AuthedApp({ user, onLogout }) {
+function AuthedApp({ user, onLogout, onAccountDeleted }) {
     const {
         device, current, thresholds, charts,
         activeProfile, refreshProfile, 
@@ -104,6 +123,7 @@ function AuthedApp({ user, onLogout }) {
     // "dashboard" = show sensor cards and charts
     // "settings"  = show threshold profile management
     // "appearance" = show theme + temperature unit buttons
+    // "account"    = NEW: name, email, password, delete account
     const [activeTab, setActiveTab] = useState("dashboard");
     // all unread alerts (one poll feeds the DANGER popup AND the Alerts badge)
     const [unreadAlerts, setUnreadAlerts] = useState([]);
@@ -118,6 +138,19 @@ function AuthedApp({ user, onLogout }) {
             <Appearance />
         </main>
     );
+
+    // NEW: Account page doesn't need sensor data either
+    const accountPage = (
+        <main className="dashboard">
+            <Account user={user} onAccountDeleted={onAccountDeleted} />
+        </main>
+    );
+
+    // Pages that look the same whether sensor data is loading, failed or ready
+    const dataFreePage =
+        activeTab === "appearance" ? appearancePage
+        : activeTab === "account" ? accountPage
+        : null;
 
     // fetch ALL unread alerts (not just danger) every 15 s.
     // DANGER ones drive the popup; danger + warning drive the Alerts badge.
@@ -185,7 +218,7 @@ function AuthedApp({ user, onLogout }) {
                     userName={user.name}
                     onLogout={onLogout}
                 />
-                {activeTab === "appearance" ? appearancePage : (
+                {dataFreePage || (
                 <main className="dashboard">
                     {activeTab === "dashboard" ? (
                         // NEW: small glowing bar under the loading text
@@ -214,7 +247,7 @@ function AuthedApp({ user, onLogout }) {
                     userName={user.name}
                     onLogout={onLogout}
                 />
-                {activeTab === "appearance" ? appearancePage : (
+                {dataFreePage || (
                 <main className="dashboard">
                     {activeTab === "dashboard" ? (
                         <p>Error: {error}</p>
@@ -256,8 +289,8 @@ function AuthedApp({ user, onLogout }) {
                     onSaveLightSchedule={updateLightSchedule}
                     onSetAutomatic={setAutomaticControl}
                 />
-            ) : activeTab === "appearance" ? (
-                appearancePage
+            ) : dataFreePage ? (
+                dataFreePage
             ) : (
                 <main className="dashboard">
                     <Settings />
