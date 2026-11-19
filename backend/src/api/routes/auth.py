@@ -1,7 +1,7 @@
 ## `backend/src/api/routes/auth.py`
 
 """
-Authentication endpoints (login/logout)
+Authentication endpoints (NEW: login/logout)
 
     POST /api/auth/register   create an account (+ copies of the example profiles)
     POST /api/auth/login      email + password -> session token
@@ -176,8 +176,7 @@ async def login(body: LoginRequest):
     """Check email + password and start a session."""
     user = await db_manager.get_user_by_email(body.email)
 
-    # Same work and same message whether the email or the password is wrong,
-    # so the form can't be used to find out who has an account
+    # Same work and same message whether the email or the password is wrong
     stored = user["password_hash"] if user else auth.DUMMY_HASH
     if not auth.verify_password(body.password, stored) or user is None:
         raise HTTPException(status_code=401, detail="Incorrect email or password")

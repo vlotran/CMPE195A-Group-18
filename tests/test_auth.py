@@ -2,7 +2,7 @@
 """
 Tests for login/logout and per-user threshold profiles.
 
-Each test gets its own empty SQLite file, so tests never touch data/hydroponic.db.
+Each test gets its own empty SQLite file, so tests never touch data/hydroponic.db
 The app's background sensor loop is NOT started (TestClient is used without
 `with`), so these run fast and need no hardware.
 """
@@ -199,7 +199,7 @@ def test_alerts_follow_each_users_own_profile(client):
     ana = login(client, email="ana@example.com")
     bob = login(client, email="bob@example.com")
 
-    # Ana: 20-25 C (Standard). Bob: widen to 0-50C so 40 C is normal for him
+    # Ana: 20-25 C (Standard). Bob: widen to 0-50C so 40 C is normal for him.
     bob_active = client.get("/api/configurations/active", headers=bob).json()
     client.patch(f"/api/configurations/{bob_active['id']}", json={"temp_min": 0, "temp_max": 50}, headers=bob)
 
@@ -216,7 +216,6 @@ def test_alerts_follow_each_users_own_profile(client):
     # Bob can't mark Ana's alert as read
     assert client.patch(f"/api/alerts/{ana_alerts[0]['id']}/read", headers=bob).status_code == 404
     assert client.patch(f"/api/alerts/{ana_alerts[0]['id']}/read", headers=ana).status_code == 200
-
 
 # DELETE ACCOUNT
 
