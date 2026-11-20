@@ -1,0 +1,59 @@
+/* Styling for Account.jsx page. Layout matches the Appearance page */
+
+.account-page {
+    padding: 24px 0;
+}
+
+/* uses the same default heading style as
+   .appearance-title, so both page headers match */
+.account-title {
+    color: var(--text);
+}
+
+/* One row per detail: label on the left, value (+ button) on the right */
+.account-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(var(--fg-rgb), 0.08);
+    border-radius: 8px;
+    background: rgba(var(--fg-rgb), 0.03);
+}
+
+.account-label {
+    color: rgba(var(--fg-rgb), 0.6);
+    font-size: 0.95rem;
+}
+
+.account-value {
+    color: var(--text);
+    font-size: 0.95rem;
+    overflow-wrap: anywhere;        /* long emails wrap instead of overflowing */
+}
+
+.account-value-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+/* Reset Password next to Delete Account, on the right under the rows */
+.account-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+/* Phones: stack the email and its button */
+@media (max-width: 520px) {
+    .account-value-group {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    }
+}

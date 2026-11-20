@@ -7,6 +7,7 @@ Authentication endpoints (NEW: login/logout)
     POST /api/auth/login      email + password -> session token
     POST /api/auth/logout     end the current session
     GET  /api/auth/me         who is logged in (used to restore a login on refresh)
+    DELETE /api/auth/me       delete the logged-in account and everything it owns
 
 Other routes protect themselves with `Depends(get_current_user)`.
 The browser sends the token as:  Authorization: Bearer <token>
@@ -75,6 +76,10 @@ class UserOut(BaseModel):
     id: int
     name: str
     email: str
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str = Field(min_length=1)
 
 
 class LoginResponse(BaseModel):
@@ -171,8 +176,7 @@ async def login(body: LoginRequest):
     """Check email + password and start a session."""
     user = await db_manager.get_user_by_email(body.email)
 
-    # Same work and same message whether the email or the password is wrong,
-    # so the form can't be used to find out who has an account.
+    # Same work and same message whether the email or the password is wrong
     stored = user["password_hash"] if user else auth.DUMMY_HASH
     if not auth.verify_password(body.password, stored) or user is None:
         raise HTTPException(status_code=401, detail="Incorrect email or password")
@@ -199,6 +203,27 @@ async def logout(
     await db_manager.delete_session(auth.hash_token(creds.credentials))
     logger.info(f"User {user['id']} logged out")
     return {"status": "success", "message": "Logged out"}
+
+
+@router.delete("/me")
+async def delete_account(body: DeleteAccountRequest, user: dict = Depends(get_current_user)):
+    """
+    Delete the logged-in account: the user, their profiles, alerts and sessions.
+    The password is asked again, so someone at an unattended signed-in device
+    can't delete the account. Afterwards the token stops working, and the email
+    can be used to sign up again.
+    """
+    record = await db_manager.get_user_by_email(user["email"])
+    if record is None or not auth.verify_password(body.password, record["password_hash"]):
+        # 403, not 401: the session is still valid, only the password is wrong
+        # (the frontend treats any 401 as "logged out")
+        raise HTTPException(status_code=403, detail="Incorrect password")
+
+    await db_manager.delete_user(user["id"])
+    # Reload the profile list so the deleted user's alerts stop being evaluated
+    data_collector.invalidate_config()
+    logger.info(f"User {user['id']} deleted their account")
+    return {"status": "success", "message": "Account deleted"}
 
 
 @router.get("/me", response_model=UserOut)

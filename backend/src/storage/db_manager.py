@@ -422,6 +422,25 @@ class DatabaseManager:
             row = await cursor.fetchone()
             return dict(row) if row else None
 
+    async def delete_user(self, user_id: int) -> bool:
+        """
+        Delete an account and everything it owns, in one transaction:
+        its alerts, threshold profiles and sessions, then the user row
+        Shared data (sensor readings, actuator state, example profiles) stays.
+
+        Rows are deleted explicitly instead of relying on ON DELETE CASCADE,
+        because SQLite only enforces foreign keys when PRAGMA foreign_keys is on
+        Returns False if the user didn't exist
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            for table in ("alerts", "threshold_configurations", "sessions"):
+                await db.execute(f"DELETE FROM {table} WHERE user_id = ?", (user_id,))
+            cursor = await db.execute("DELETE FROM users WHERE id = ?", (user_id,)) 
+   
+            await db.commit()  # all or nothing: nothing is removed if any step fails
+            
+            return cursor.rowcount > 0
+
     async def delete_session(self, token_hash: str) -> None:
         """Logout: the token stops working immediately."""
         async with aiosqlite.connect(self.db_path) as db:
