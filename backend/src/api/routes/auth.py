@@ -1,7 +1,7 @@
 ## `backend/src/api/routes/auth.py`
 
 """
-Authentication endpoints (NEW: login/logout)
+Authentication endpoints 
 
     POST /api/auth/register   create an account (+ copies of the example profiles)
     POST /api/auth/login      email + password -> session token
@@ -18,12 +18,14 @@ import re
 
 import aiosqlite
 from email_validator import EmailNotValidError, validate_email
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field, field_validator
 
 from backend.src.config.settings import settings
 from backend.src.services import auth
+from backend.src.services.account_emails import build_goodbye_email, build_welcome_email
+from backend.src.services.email_service import send_email
 from backend.src.services.data_collector import data_collector
 from backend.src.storage import db_manager
 from backend.src.utils.logger import logger
@@ -150,7 +152,7 @@ async def _require_mail_domain(email: str) -> None:
 # ROUTES 
 
 @router.post("/register", status_code=201, response_model=UserOut)
-async def register(body: RegisterRequest):
+async def register(body: RegisterRequest, background: BackgroundTasks):
     """
     Create an account. The new user starts with their own copy of every
     example threshold profile; what they add or delete later only affects them
@@ -168,6 +170,10 @@ async def register(body: RegisterRequest):
 
     await db_manager.seed_user_profiles(user_id)
     data_collector.invalidate_config()  # new user's active profile -> start alerting
+
+    # Welcome email, sent after the response so a slow mail server doesn't
+    # delay sign-up. A failed send is only logged; the account still exists.
+    background.add_task(send_email, body.email, *build_welcome_email(body.name))
     return UserOut(id=user_id, name=body.name, email=body.email)
 
 
@@ -206,7 +212,11 @@ async def logout(
 
 
 @router.delete("/me")
-async def delete_account(body: DeleteAccountRequest, user: dict = Depends(get_current_user)):
+async def delete_account(
+    body: DeleteAccountRequest,
+    background: BackgroundTasks,
+    user: dict = Depends(get_current_user),
+):
     """
     Delete the logged-in account: the user, their profiles, alerts and sessions.
     The password is asked again, so someone at an unattended signed-in device
@@ -223,6 +233,10 @@ async def delete_account(body: DeleteAccountRequest, user: dict = Depends(get_cu
     # Reload the profile list so the deleted user's alerts stop being evaluated
     data_collector.invalidate_config()
     logger.info(f"User {user['id']} deleted their account")
+
+    # Goodbye email to the address the account had (kept in `user`, since the
+    # row is gone now). Sent after the response, like the welcome email.
+    background.add_task(send_email, user["email"], *build_goodbye_email(user["name"]))
     return {"status": "success", "message": "Account deleted"}
 
 

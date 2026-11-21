@@ -80,8 +80,8 @@ def build_danger_email(transitions: list, dashboard_url: str = "") -> tuple[str,
 
         DANGER range reached!
         Temperature:
-          - BME280 Sensor: 20.6 °C (69.0 °F) (DANGER)
-          - BME680 Sensor: 20.6 °C (69.0 °F) (DANGER)
+            - BME280 Sensor: 20.6 °C (69.0 °F) (DANGER)
+            - BME680 Sensor: 20.6 °C (69.0 °F) (DANGER)
         Your range: 27.0-30.0°C / 80.6-86.0°F
         [View here]
 

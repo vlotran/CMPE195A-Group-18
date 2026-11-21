@@ -3,6 +3,7 @@
 ## What changed
 - **DANGER alerts are emailed.** When a reading reaches DANGER on a user's active profile, that user gets an email. WARNING and back-to-normal alerts stay in the dashboard only.
 - **Sign-up checks the email domain.** Domains that can't receive mail, such as `example.com` or `gmail.con`, are rejected. Existing accounts can still log in.
+- **Account emails.** New users get a welcome email, and users who delete their account get a goodbye email.
 
 Email stays off until `SMTP_USERNAME` is set in `.env`.
 
