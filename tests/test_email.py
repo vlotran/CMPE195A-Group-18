@@ -125,8 +125,8 @@ def test_smtp_failure_does_not_raise(monkeypatch):
     assert asyncio.run(email_service.send_email("a@b.com", "s", "b")) is False
 
 
-def record(user_id, state, monkeypatch):
-    """Record one transition; return the emails it sent as (to, subject, body)."""
+def capture_emails(monkeypatch):
+    """Replace send_email; returns the list it records (to, subject, text, html) into."""
     sent = []
 
     async def fake_send(*args):
@@ -134,60 +134,150 @@ def record(user_id, state, monkeypatch):
 
     monkeypatch.setattr(settings, "smtp_username", "pi@gmail.com")
     monkeypatch.setattr(dc, "send_email", fake_send)
+    return sent
+
+
+class FakeEvaluator:
+    """Returns a prepared transition for chosen (sensor, metric) pairs."""
+
+    def __init__(self, transitions):
+        self.transitions = transitions
+
+    def evaluate(self, sensor_type, metric, value, config):
+        return self.transitions.get((sensor_type, metric))
+
+
+def run_cycle(user_id, transitions, readings, monkeypatch):
+    """Run one alert-evaluation cycle and wait for its emails."""
     collector = dc.DataCollector()
 
+    async def configs():
+        return {user_id: SimpleNamespace()}
+
+    monkeypatch.setattr(collector, "_get_configs", configs)
+    collector.evaluators[user_id] = FakeEvaluator(transitions)
+
     async def run():
-        await collector._record_alert(transition(state), user_id)
+        await collector._evaluate_alerts(readings)
         if collector._email_tasks:
             await asyncio.gather(*collector._email_tasks)
 
     asyncio.run(run())
-    return sent
+    return collector
 
 
-def test_danger_alert_emails_the_profile_owner(client, monkeypatch):
+READINGS = {
+    "bme280": {"status": "ok", "temperature": 40.0, "humidity": 50.0},
+    "bme680": {"status": "ok", "temperature": 40.0, "humidity": 90.0},
+}
+
+
+def test_dangers_in_one_cycle_are_combined_into_one_email(client, monkeypatch):
     user_id = client.post("/api/auth/register", json=NEW_USER).json()["id"]
+    sent = capture_emails(monkeypatch)
+    hum = transition(AlertState.DANGER, sensor_type="bme680", metric="humidity")
+    hum.value, hum.threshold_min, hum.threshold_max = 90.0, 50.0, 70.0
 
-    sent = record(user_id, AlertState.DANGER, monkeypatch)
+    run_cycle(user_id, {
+        ("bme280", "temperature"): transition(AlertState.DANGER, "bme280"),
+        ("bme680", "temperature"): transition(AlertState.DANGER, "bme680"),
+        ("bme680", "humidity"): hum,
+        ("bme280", "humidity"): transition(AlertState.WARNING, "bme280", "humidity"),
+    }, READINGS, monkeypatch)
 
-    assert len(sent) == 1
-    to, subject, body = sent[0]
+    assert len(sent) == 1                       # one email, not three
+    to, subject, text, html = sent[0]
     assert to == NEW_USER["email"]
-    assert "Temperature" in subject
-    assert "40.0 °C" in body and "20.0-25.0°C" in body
+    assert subject == "DANGER range reached: Temperature, Humidity"
+    assert text.startswith("DANGER range reached!")
+    assert "  - BME280 Sensor: 40.0 °C (104.0 °F) (DANGER)" in text
+    assert "  - BME680 Sensor: 40.0 °C (104.0 °F) (DANGER)" in text
+    assert "Your range: 20.0-25.0°C / 68.0-77.0°F" in text
+    assert "  - BME680 Sensor: 90.0% (DANGER)" in text
+    assert "Your range: 50.0-70.0%" in text
+    assert "BME280 Sensor: 50" not in text      # the WARNING is not in the email
+    # Temperature is listed before Humidity, like the dashboard
+    assert text.index("Temperature:") < text.index("Humidity:")
+    assert "<h2" in html and "DANGER range reached!" in html
+
+
+def test_each_user_gets_their_own_email(client, monkeypatch):
+    ana = client.post("/api/auth/register", json=NEW_USER).json()["id"]
+    bob = client.post("/api/auth/register", json={**NEW_USER, "email": "bob@gmail.com"}).json()["id"]
+    sent = capture_emails(monkeypatch)
+    collector = dc.DataCollector()
+
+    async def configs():
+        return {ana: SimpleNamespace(), bob: SimpleNamespace()}
+
+    monkeypatch.setattr(collector, "_get_configs", configs)
+    for uid in (ana, bob):
+        collector.evaluators[uid] = FakeEvaluator({("bme280", "temperature"): transition(AlertState.DANGER)})
+
+    async def run():
+        await collector._evaluate_alerts(READINGS)
+        await asyncio.gather(*collector._email_tasks)
+
+    asyncio.run(run())
+    assert sorted(e[0] for e in sent) == ["ana@gmail.con", "bob@gmail.com"]
 
 
 @pytest.mark.parametrize("state", [AlertState.WARNING, AlertState.NORMAL])
 def test_other_alerts_do_not_email(client, monkeypatch, state):
     user_id = client.post("/api/auth/register", json=NEW_USER).json()["id"]
-    assert record(user_id, state, monkeypatch) == []
+    sent = capture_emails(monkeypatch)
+    run_cycle(user_id, {("bme280", "temperature"): transition(state)}, READINGS, monkeypatch)
+    assert sent == []
 
 
 def test_alert_for_deleted_user_sends_nothing(client, monkeypatch):
-    assert record(99999, AlertState.DANGER, monkeypatch) == []
+    sent = capture_emails(monkeypatch)
+    run_cycle(99999, {("bme280", "temperature"): transition(AlertState.DANGER)}, READINGS, monkeypatch)
+    assert sent == []
 
 
 def test_danger_alert_sends_nothing_when_email_is_off(client, monkeypatch):
     user_id = client.post("/api/auth/register", json=NEW_USER).json()["id"]
     monkeypatch.setattr(dc, "send_email", lambda *a: pytest.fail("must not send"))
-
-    async def run():
-        collector = dc.DataCollector()
-        await collector._record_alert(transition(AlertState.DANGER), user_id)
-        assert not collector._email_tasks
-
-    asyncio.run(run())
+    collector = run_cycle(user_id, {("bme280", "temperature"): transition(AlertState.DANGER)},
+                          READINGS, monkeypatch)
+    assert not collector._email_tasks
 
 
-def test_ph_email_does_not_repeat_the_sensor_name(client, monkeypatch):
-    user_id = client.post("/api/auth/register", json=NEW_USER).json()["id"]
+def test_ph_sensor_is_named_after_its_metric():
+    ph = transition(AlertState.DANGER, sensor_type="ph", metric="ph")
+    ph.value, ph.threshold_min, ph.threshold_max = 5.1, 5.5, 6.5
+    _, text, _ = dc.build_danger_email([ph])
+    assert "  - pH Sensor: 5.1 (DANGER)" in text
+
+
+def test_view_here_button_only_with_a_dashboard_url():
+    t = [transition(AlertState.DANGER)]
+
+    _, text, html = dc.build_danger_email(t, "")
+    assert "View here" not in text and "View here" not in html
+
+    _, text, html = dc.build_danger_email(t, "https://garden.example/app?a=1&b=2")
+    assert "View here: https://garden.example/app?a=1&b=2" in text
+    # the link is escaped inside the HTML attribute
+    assert 'href="https://garden.example/app?a=1&amp;b=2"' in html and ">View here</a>" in html
+
+
+def test_send_includes_html_version(monkeypatch):
     sent = []
 
-    async def fake_send(*args):
-        sent.append(args)
+    class FakeSMTP:
+        def __init__(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *exc): return False
+        def starttls(self, context): pass
+        def login(self, user, password): pass
+        def send_message(self, msg): sent.append(msg)
 
-    monkeypatch.setattr(dc, "send_email", fake_send)
-    asyncio.run(dc.DataCollector()._email_danger_alert(
-        transition(AlertState.DANGER, sensor_type="ph", metric="ph"), user_id
-    ))
-    assert sent[0][2].startswith("pH is DANGER")
+    monkeypatch.setattr(email_service.smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setattr(settings, "smtp_username", "pi@gmail.com")
+
+    asyncio.run(email_service.send_email("a@b.com", "s", "plain", "<b>rich</b>"))
+    msg = sent[0]
+    assert msg.get_body(("plain",)).get_content().strip() == "plain"
+    assert msg.get_body(("html",)).get_content().strip() == "<b>rich</b>"

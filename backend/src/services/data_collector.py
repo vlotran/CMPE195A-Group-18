@@ -4,6 +4,7 @@ Compatible with both mock sensors and real Raspberry Pi sensors
 """
 
 import asyncio
+import html
 from datetime import datetime
 from typing import Optional
 from types import SimpleNamespace
@@ -65,6 +66,85 @@ def _fmt_value(metric:str, value:float) -> str:
         return f"{value:.0f}"   # NEW: whole-number score (1-4), not "3.0"
     return f"{value:.1f}{METRIC_UNITS.get(metric, '')}"
     
+def _sensor_name(t) -> str:
+    """'BME280 Sensor'; the pH sensor is named after its metric, so 'pH Sensor'."""
+    if t.sensor_type == t.metric:
+        return f"{METRIC_LABELS.get(t.metric, t.metric)} Sensor"
+    return f"{t.sensor_type.upper()} Sensor"
+
+
+def build_danger_email(transitions: list, dashboard_url: str = "") -> tuple[str, str, str]:
+    """
+    One email for every DANGER alert a user got in the same reading cycle,
+    grouped by metric:
+
+        DANGER range reached!
+        Temperature:
+          - BME280 Sensor: 20.6 °C (69.0 °F) (DANGER)
+          - BME680 Sensor: 20.6 °C (69.0 °F) (DANGER)
+        Your range: 27.0-30.0°C / 80.6-86.0°F
+        [View here]
+
+    Returns (subject, plain text, HTML). The HTML uses inline styles and a
+    simple layout because mail apps strip <style> blocks and most modern CSS.
+    """
+    # Group by metric, in the dashboard's order (Temperature, Humidity, pH, ...)
+    groups: dict[str, list] = {}
+    for t in sorted(transitions, key=lambda t: (list(METRIC_LABELS).index(t.metric)
+                                                if t.metric in METRIC_LABELS else 99,
+                                                t.sensor_type)):
+        groups.setdefault(t.metric, []).append(t)
+
+    labels = [METRIC_LABELS.get(m, m) for m in groups]
+    subject = f"DANGER range reached: {', '.join(labels)}"
+
+    text_parts = ["DANGER range reached!", ""]
+    html_sections = []
+    for metric, items in groups.items():
+        label = METRIC_LABELS.get(metric, metric)
+        # Every sensor of one metric is checked against the same profile range
+        your_range = _fmt_range(metric, items[0].threshold_min, items[0].threshold_max)
+
+        text_parts.append(f"{label}:")
+        text_parts += [f"  - {_sensor_name(t)}: {_fmt_value(metric, t.value)} (DANGER)" for t in items]
+        text_parts += [f"Your range: {your_range}", ""]
+
+        rows = "".join(
+            f'<li style="margin:0 0 4px">{html.escape(_sensor_name(t))}: '
+            f'{html.escape(_fmt_value(metric, t.value))} '
+            f'<strong style="color:#c62828">(DANGER)</strong></li>'
+            for t in items
+        )
+        html_sections.append(
+            '<div style="margin:0 0 16px;padding:12px 16px;border:1px solid #f3c2c2;'
+            'border-radius:8px;background:#fff5f5">'
+            f'<p style="margin:0 0 8px;font-weight:bold">{html.escape(label)}:</p>'
+            f'<ul style="margin:0 0 8px;padding-left:20px">{rows}</ul>'
+            f'<p style="margin:0;color:#4b5563">Your range: {html.escape(your_range)}</p>'
+            '</div>'
+        )
+
+    button = ""
+    if dashboard_url:
+        text_parts += [f"View here: {dashboard_url}", ""]
+        button = (
+            f'<p style="margin:20px 0"><a href="{html.escape(dashboard_url, quote=True)}" '
+            'style="display:inline-block;padding:10px 22px;border-radius:8px;'
+            'background:#e8650a;color:#ffffff;font-weight:bold;text-decoration:none">'
+            'View here</a></p>'
+        )
+    text_parts.append("Please check your garden.")
+
+    html_body = (
+        '<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;color:#1f2933">'
+        '<h2 style="margin:0 0 16px;color:#c62828">DANGER range reached!</h2>'
+        f'{"".join(html_sections)}{button}'
+        '<p style="margin:16px 0 0;color:#4b5563">Please check your garden.</p>'
+        '</div>'
+    )
+    return subject, "\n".join(text_parts) + "\n", html_body
+
+
 def _fmt_range(metric: str, lo: float, hi: float) -> str:
     """Format a threshold range for an alert message."""
     if metric == "temperature":
@@ -305,6 +385,10 @@ class DataCollector:
                 self._warned_no_config = True
             return
 
+        # DANGER alerts from this cycle, per user, so each user gets ONE email
+        # even when several sensors cross into DANGER together
+        dangers: dict[int, list] = {}
+
         for user_id, config in configs.items():
             evaluator = self.evaluators.setdefault(user_id, AlertEvaluator())
 
@@ -326,6 +410,11 @@ class DataCollector:
                     )
                     if transition:
                         await self._record_alert(transition, user_id)
+                        if transition.should_notify:
+                            dangers.setdefault(user_id, []).append(transition)
+
+        for user_id, transitions in dangers.items():
+            self._queue_danger_email(user_id, transitions)
 
     async def _record_alert(self, t, user_id: int):
         """Persist one transition, and notify if it warrants it."""
@@ -359,31 +448,27 @@ class DataCollector:
         if t.should_notify:
             # TODO(Phase 4): web push
             logger.warning(f"DANGER: {message}")
-            
-            # In the background: slow SMTP must not delay the next sensor reading
-            if settings.smtp_username:
-                task = asyncio.create_task(self._email_danger_alert(t, user_id))
-                self._email_tasks.add(task)
-                task.add_done_callback(self._email_tasks.discard)
+            # The email is sent once per cycle by _evaluate_alerts, not here
 
-    async def _email_danger_alert(self, t, user_id: int):
-        """Email the alert to the user who owns the profile. Never raises."""
+    def _queue_danger_email(self, user_id: int, transitions: list):
+        """
+        Send one email for this user's DANGER alerts, in the background:
+        slow SMTP must not delay the next sensor reading.
+        """
+        if not settings.smtp_username:
+            return  # email is turned off
+        task = asyncio.create_task(self._email_danger_alerts(transitions, user_id))
+        self._email_tasks.add(task)
+        task.add_done_callback(self._email_tasks.discard)
+
+    async def _email_danger_alerts(self, transitions: list, user_id: int):
+        """Email the alerts to the user who owns the profile. Never raises."""
         try:
             to = await db_manager.get_user_email(user_id)
             if to is None:
                 return
-
-            label = METRIC_LABELS.get(t.metric, t.metric)
-            # pH is its own sensor, so "pH (PH)" would be redundant
-            who = label if t.sensor_type == t.metric else f"{label} ({t.sensor_type.upper()})"
-            subject = f"DANGER: {label} out of range"
-            body = (
-                f"{who} is DANGER: "
-                f"{_fmt_value(t.metric, t.value)}\n"
-                f"Your range: {_fmt_range(t.metric, t.threshold_min, t.threshold_max)}\n\n"
-                "Please check your garden.\n"
-            )
-            await send_email(to, subject, body)
+            subject, text, html_body = build_danger_email(transitions, settings.dashboard_url)
+            await send_email(to, subject, text, html_body)
         except Exception as e:
             logger.error(f"Could not email alert to user {user_id}: {e}")
 

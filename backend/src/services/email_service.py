@@ -12,7 +12,7 @@ from backend.src.config.settings import settings
 from backend.src.utils.logger import logger
 
 
-def _send(to: str, subject: str, body: str) -> None:
+def _send(to: str, subject: str, body: str, html: str | None = None) -> None:
     """Blocking send: connect, encrypt, log in, deliver to the SMTP server"""
     msg = EmailMessage()
 
@@ -21,7 +21,9 @@ def _send(to: str, subject: str, body: str) -> None:
     msg["From"] = f"{settings.app_name} <{sender}>"
     msg["To"] = to
     msg["Subject"] = subject
-    msg.set_content(body)
+    msg.set_content(body)  # plain text: shown by mail apps that block HTML
+    if html:
+        msg.add_alternative(html, subtype="html")  # shown by most mail apps
 
     # timeout: a dead mail server gives up instead of hanging the thread forever
     with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
@@ -30,7 +32,7 @@ def _send(to: str, subject: str, body: str) -> None:
         server.send_message(msg)
 
 
-async def send_email(to: str, subject: str, body: str) -> bool:
+async def send_email(to: str, subject: str, body: str, html: str | None = None) -> bool:
     """
     Send one email without blocking the event loop.
     Returns False instead of raising: a mail problem must never stop the backend.
@@ -39,7 +41,7 @@ async def send_email(to: str, subject: str, body: str) -> bool:
         return False  # email is turned off
 
     try:
-        await asyncio.to_thread(_send, to, subject, body)
+        await asyncio.to_thread(_send, to, subject, body, html)
         logger.info(f"Alert email sent to {to}")
         return True
     except Exception as e:

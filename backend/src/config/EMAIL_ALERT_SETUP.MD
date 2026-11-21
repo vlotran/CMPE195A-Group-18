@@ -36,6 +36,8 @@ SMTP_FROM=yourproject@gmail.com
 ```
 `SMTP_FROM` must be the sender you verified in step 2.
 
+Optional: add `DASHBOARD_URL=https://...` with the web address of the app to show a **View here** button in alert emails. Leave it out until the app has a public address; the email works without it.
+
 Using Gmail instead (if its App Password works): set `SMTP_HOST=smtp.gmail.com`, put the Gmail address and App Password in `SMTP_USERNAME` and `SMTP_PASSWORD`, and leave out `SMTP_FROM`.
 
 Then lock the file. Run this as the user that runs the backend:
@@ -99,4 +101,4 @@ If the SMTP key may have leaked, delete it in Brevo under Settings > SMTP & API,
 - The check confirms the domain receives mail, not that the mailbox exists or belongs to the person signing up.
 - Sign-up has no email confirmation or rate limit, so don't treat this as ready for public use.
 - The free Brevo plan allows 300 emails a day, shared by everyone.
-- One incident can send two emails, because the BME280 and BME680 both report temperature and humidity.
+- Sensors that reach DANGER in the same reading are combined into one email. If they cross a reading apart, they arrive as separate emails.

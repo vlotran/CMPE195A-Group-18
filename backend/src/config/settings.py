@@ -49,11 +49,16 @@ class Settings(BaseSettings):
     # Email alerts. Leave smtp_username empty to turn email off
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
+    
     smtp_username: str = ""
     smtp_password: str = ""  # Gmail: an App Password. Brevo: the SMTP key
     # Address alerts come from. Empty = smtp_username (right for Gmail; Brevo's
     # login is not an address people can reply to, so set this for Brevo)
     smtp_from: str = ""
+
+    # Address of the web app, for the "View here" button in alert emails.
+    # Empty = no button (the app has no public address yet)
+    dashboard_url: str = ""
 
     # CORS
     allowed_origins: str = "*"
