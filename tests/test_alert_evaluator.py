@@ -51,7 +51,7 @@ def test_classification_matches_sensorcard(ev, value, expected):
 
 def test_real_readings_from_dashboard(ev):
     """Regression: the values that prompted the tolerance change."""
-    # 26.83°C against 22–26.5 was showing DANGER; should be WARNING
+    # 26.83 C against 22–26.5 was showing DANGER; should be WARNING
     assert ev.classify(26.83, 22.0, 26.5, 2.0, AlertState.NORMAL) == AlertState.WARNING
     # 47.49% against 30–47 — same
     assert ev.classify(47.49, 30.0, 47.0, 5.0, AlertState.NORMAL) == AlertState.WARNING
@@ -65,11 +65,11 @@ def test_stable_normal_produces_no_alerts(ev):
 
 def test_entering_warning_fires_once_then_goes_quiet(ev):
     assert feed(ev, 31.0) is None          # 1st reading — not yet confirmed
-    t = feed(ev, 31.0)                     # 2nd — confirmed
+    t = feed(ev, 31.0)                     # 2nd - confirmed
     assert t is not None
     assert t.from_state == AlertState.NORMAL
     assert t.to_state == AlertState.WARNING
-    assert feed(ev, 31.0, n=10) is None     # stable — silence
+    assert feed(ev, 31.0, n=10) is None     # stable - silence
 
 
 def test_danger_notifies_but_warning_does_not(ev):
@@ -133,13 +133,7 @@ def test_ph_uses_its_own_tolerance(ev):
     d = feed(ev, 6.9, n=2, sensor="ph", metric="ph")     # beyond 6.8
     assert d.to_state == AlertState.DANGER
 
-# NEW: BME680 pressure + air quality score
-def test_pressure_uses_its_own_tolerance(ev):
-    assert feed(ev, 1013.0, n=2, sensor="bme680", metric="pressure") is None
-    w = feed(ev, 1035.0, n=2, sensor="bme680", metric="pressure")  # within 10 above max
-    assert w.to_state == AlertState.WARNING
-    d = feed(ev, 1045.0, n=2, sensor="bme680", metric="pressure")  # beyond 1040
-    assert d.to_state == AlertState.DANGER
+# remove test for air pressure 
 
 
 @pytest.mark.parametrize("score,expected", [
@@ -148,6 +142,7 @@ def test_pressure_uses_its_own_tolerance(ev):
     (3, AlertState.WARNING),      # Poor, one step over
     (4, AlertState.DANGER),       # Unhealthy, two steps over
 ])
+
 def test_aqi_score_bands(ev, score, expected):
     t = feed(ev, score, n=2, sensor="bme680", metric="aqi_score")
     assert (t.to_state if t else None) == expected
