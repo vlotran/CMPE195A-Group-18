@@ -9,7 +9,7 @@
  * Props:
  *  - profile: the active configuration from the backend
  *      {name, description, ph_min, ph_max, temp_min, temp_max, humidity_min, humidity_max,
- *       pressure_min, pressure_max, aqi_min, aqi_max}  (null = no active profile)
+ *       aqi_min, aqi_max}  (null = no active profile)
  *  - onManage(): optional, opens the Settings tab ("Change profile" link)
  */
 import React, { useState } from "react";
@@ -42,7 +42,6 @@ function ProfileIndicator({ profile, onManage }) {
                 : formatTempRange(profile.temp_min, profile.temp_max, tempUnit),
         },
         { key: "hum", label: "Humidity", value: range(profile.humidity_min, profile.humidity_max, " %") },
-        { key: "pressure", label: "Air Pressure", value: range(profile.pressure_min, profile.pressure_max, " hPa") },
         { key: "aqi", label: "Air Quality",   /* same as the card title; "Score" wrapped on phones */ value: range(profile.aqi_min, profile.aqi_max) },
     ];
 

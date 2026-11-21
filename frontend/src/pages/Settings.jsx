@@ -46,7 +46,6 @@ function Settings() {
             ph_min: 5.5, ph_max: 6.5,
             temp_min: 18, temp_max: 28,
             humidity_min: 50, humidity_max: 70,
-            pressure_min: 990, pressure_max: 1030,  
             aqi_min: 1, aqi_max: 2,   
         });
         setModalOpen(true);
@@ -109,8 +108,6 @@ function Settings() {
                     ph_min: formData.ph_min, ph_max: formData.ph_max,
                     temp_min: formData.temp_min, temp_max: formData.temp_max,
                     humidity_min: formData.humidity_min, humidity_max: formData.humidity_max,
-
-                    pressure_min: formData.pressure_min, pressure_max: formData.pressure_max,
                     aqi_min: formData.aqi_min, aqi_max: formData.aqi_max,  
                     
                 });

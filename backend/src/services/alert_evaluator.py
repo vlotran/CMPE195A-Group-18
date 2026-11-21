@@ -25,8 +25,8 @@ METRIC_BOUNDS = {
     "humidity":     ("humidity_min", "humidity_max"),
     "ph":           ("ph_min", "ph_max"),
 
-    "pressure":     ("pressure_min", "pressure_max"),   # NEW (BME680, hPa)
-    "aqi_score":    ("aqi_min", "aqi_max"),             # NEW (BME680, 1-4)
+    # The pressure_min/max columns stay in the database but are ignored.
+    "aqi_score":    ("aqi_min", "aqi_max"),      
 }
 
 # Absolute tolerance OUTSIDE [min, max] that counts as WARNING; beyond is DANGER.
@@ -35,9 +35,8 @@ TOLERANCE = {
     "temperature": 2.0,
     "humidity": 5.0,
     "ph": 0.3,
-    
-    "pressure": 10.0,   # NEW: hPa
-    "aqi_score": 1,     # NEW: one step outside the range = WARNING, two = DANGER
+
+    "aqi_score": 1,
 }
 
 @dataclass

@@ -281,3 +281,87 @@ def test_send_includes_html_version(monkeypatch):
     msg = sent[0]
     assert msg.get_body(("plain",)).get_content().strip() == "plain"
     assert msg.get_body(("html",)).get_content().strip() == "<b>rich</b>"
+
+
+# ACCOUNT EMAILS (welcome after sign-up, goodbye after delete)
+
+def capture_account_emails(monkeypatch):
+    """Replace send_email in the auth routes; returns what it records."""
+    sent = []
+
+    async def fake_send(*args):
+        sent.append(args)
+
+    monkeypatch.setattr(auth_routes, "send_email", fake_send)
+    return sent
+
+
+def test_sign_up_sends_welcome_email(client, monkeypatch):
+    sent = capture_account_emails(monkeypatch)
+
+    assert client.post("/api/auth/register", json=NEW_USER).status_code == 201
+
+    assert len(sent) == 1
+    to, subject, text, html = sent[0]
+    assert to == NEW_USER["email"]
+    assert subject == "Welcome to Smart Hydroponic Garden System"
+    assert text.startswith("CONGRATULATIONS!")
+    assert "Hi Ana," in text
+    assert "You have successfully signed up for Smart Hydroponic Garden System." in text
+    assert "CONGRATULATIONS!" in html
+
+
+def test_failed_sign_up_sends_nothing(client, monkeypatch):
+    client.post("/api/auth/register", json=NEW_USER)
+    sent = capture_account_emails(monkeypatch)
+
+    # email already used
+    assert client.post("/api/auth/register", json=NEW_USER).status_code == 409
+    # domain can't receive mail
+    monkeypatch.setattr(settings, "check_email_domain", True)
+    monkeypatch.setattr(auth_routes, "validate_email",
+                        lambda *a, **k: (_ for _ in ()).throw(EmailUndeliverableError("x")))
+    assert client.post("/api/auth/register", json={**NEW_USER, "email": "x@bad.test"}).status_code == 422
+
+    assert sent == []
+
+
+def login_headers(client):
+    client.post("/api/auth/register", json=NEW_USER)
+    token = client.post("/api/auth/login", json={
+        "email": NEW_USER["email"], "password": NEW_USER["password"],
+    }).json()["token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_delete_account_sends_goodbye_email(client, monkeypatch):
+    headers = login_headers(client)
+    sent = capture_account_emails(monkeypatch)
+
+    res = client.request("DELETE", "/api/auth/me", headers=headers,
+                            json={"password": NEW_USER["password"]})
+    assert res.status_code == 200
+
+    assert len(sent) == 1
+    to, subject, text, html = sent[0]
+    assert to == NEW_USER["email"]
+    assert subject == "Your Smart Hydroponic Garden System account has been deleted"
+    assert text.startswith("SORRY TO SEE YOU GO...")
+    assert "Your Smart Hydroponic Garden System account and email have been successfully deleted." in text
+    assert "SORRY TO SEE YOU GO..." in html
+
+
+def test_wrong_password_sends_no_goodbye_email(client, monkeypatch):
+    headers = login_headers(client)
+    sent = capture_account_emails(monkeypatch)
+
+    res = client.request("DELETE", "/api/auth/me", headers=headers, json={"password": "wrong"})
+    assert res.status_code == 403
+    assert sent == []
+
+
+def test_account_emails_escape_the_name():
+    from backend.src.services.account_emails import build_welcome_email
+    _, text, html = build_welcome_email("<b>Ana</b>")
+    assert "Hi <b>Ana</b>," in text          # plain text is shown as-is
+    assert "&lt;b&gt;Ana&lt;/b&gt;" in html   # but can't inject HTML
