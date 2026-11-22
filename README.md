@@ -37,7 +37,7 @@ Small hydroponic growers have to check pH, temperature and humidity by hand, and
 - Automatic actuator control and physical relay outputs require Pi hardware and are disabled by default; mock mode cannot verify physical switching.
 
 ## System Architecture
-![ProtoypeDiagram](docs/system-architecture/ProtoypeDiagram.png)
+![ArchitectureDiagram](docs\system-architecture\ArchitectureDiagram.png)
 - **Sensors:** 
     + BME280: Air temperature (C), air humidity (%)
     + BME680: Air temperature (C), air humidity (%), air quality
