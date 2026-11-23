@@ -39,9 +39,9 @@ class PHReal(BaseSensor):
             self.bus = smbus2.SMBus(1)  # I2C bus 1 on Raspberry Pi
             self.address = i2c_address
             
-            # Test connection
-            self._send_command("Status")
-            time.sleep(0.3)
+            # Test connection: "i" must get a success reply
+            self._send_command("i")
+            self._read_response(wait=0.3)
             
             self.is_initialized = True
             logger.info(f"pH sensor initialized at address 0x{i2c_address:02x}")
@@ -52,21 +52,22 @@ class PHReal(BaseSensor):
             self.is_initialized = False
     
     def _send_command(self, command: str):
-        """Send command to pH sensor"""
-        command_bytes = (command + "\00").encode('latin-1')
-        self.bus.write_i2c_block_data(self.address, 0, list(command_bytes))
+        """Send command to pH sensor (raw write, no register byte)"""
+        self.bus.i2c_rdwr(smbus2.i2c_msg.write(self.address, command.encode("ascii")))
     
-    def _read_response(self) -> str:
-        """Read response from pH sensor"""
-        time.sleep(0.9)  # Wait for sensor to process
+    def _read_response(self, wait: float = 0.9) -> str:
+        """Read response; first byte is a status code (1 = success)"""
+        time.sleep(wait)  # Wait for sensor to process
         
-        # Read response
-        response = self.bus.read_i2c_block_data(self.address, 0, 31)
+        msg = smbus2.i2c_msg.read(self.address, 31)
+        self.bus.i2c_rdwr(msg)
+        data = bytes(list(msg))
         
-        # Remove null bytes and decode
-        response_str = ''.join([chr(byte) for byte in response if byte != 0])
+        if data[0] != 1:
+            errors = {2: "command failed", 254: "still processing", 255: "no data"}
+            raise RuntimeError(f"pH sensor: {errors.get(data[0], f'status {data[0]}')}")
         
-        return response_str.strip()
+        return data[1:].split(b"\x00", 1)[0].decode("ascii").strip()
     
     def _blocking_i2c_read(self) -> Dict[str, Any]:
         """
